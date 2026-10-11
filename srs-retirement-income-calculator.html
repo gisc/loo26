@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRS Retirement Income Calculator</title>
+<style>
+/* ---------- Colours (no green anywhere) ---------- */
+:root{
+  --bg:#070A14; --p1:#0D1222; --p2:#161E3A; --line:rgba(150,165,215,.18);
+  --text:#F3F5FB; --text2:#AEB6CE; --muted:#8089A6;
+  --sky:#7DD3FC; --coral:#FF8E72; --amber:#FBBF24; --white:#fff;
+  --blue:#6FA8FF; --violet:#A98BFF;
+  --net:linear-gradient(90deg,#7DB4FF,#B69CFF,#F2A2CF);
+  --ctl:linear-gradient(90deg,#6FA8FF,#A98BFF);
+  --gold:linear-gradient(90deg,#F5C04A,#FBBF24);
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums;overflow-x:hidden;
+  background:radial-gradient(700px 420px at 12% -5%,rgba(169,139,255,.22),transparent 70%),radial-gradient(700px 420px at 95% 10%,rgba(111,168,255,.18),transparent 70%),var(--bg);background-attachment:fixed}
+h1,h2,h3,h4,p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 40px}
+.panel{background:linear-gradient(160deg,var(--p1),var(--p2));border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35);min-width:0}
+section{margin-top:20px}
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.sky{color:var(--sky)}.coral{color:var(--coral)}.amber{color:var(--amber)}.muted{color:var(--muted)}.t2{color:var(--text2)}
+.netg{background:var(--net);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+
+/* ---------- Header ---------- */
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--text2);background:rgba(255,255,255,.04)}
+h1{font-size:clamp(30px,5vw,50px);line-height:1.1;font-weight:800;margin:16px 0 10px}
+.sub{color:var(--text2);max-width:70ch;font-size:clamp(15px,2vw,17px)}
+
+/* ---------- Dashboard ---------- */
+.dash{display:grid;grid-template-columns:400px minmax(0,1fr);gap:20px;align-items:start;margin-top:26px}
+@media (max-width:960px){.dash{grid-template-columns:minmax(0,1fr)}}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.ph h2{font-size:20px}
+.ghost{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text2);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer}
+.ghost:hover{color:var(--text)}
+.f{margin-bottom:22px}
+.f label.l{display:block;font-weight:600;margin-bottom:8px}
+.help{color:var(--muted);font-size:13px;margin-top:6px}
+.money{display:flex;align-items:center;gap:8px;background:rgba(7,10,20,.6);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px}
+.money:focus-within{border-color:var(--blue)}
+.money b{color:var(--text2)}
+.money input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:24px;font-weight:700}
+.row{display:flex;align-items:center;gap:12px}
+.row input[type=range]{flex:1;min-width:0}
+.num{width:78px;background:rgba(7,10,20,.6);border:1.5px solid var(--line);border-radius:10px;color:var(--text);font:inherit;padding:8px;text-align:right}
+input[type=range]{-webkit-appearance:none;appearance:none;height:8px;border-radius:4px;background:linear-gradient(90deg,#6FA8FF,#A98BFF) 0/var(--pct,50%) 100% no-repeat,rgba(255,255,255,.12);outline:0;cursor:pointer}
+input[type=range].gold{background:linear-gradient(90deg,#F5C04A,#FBBF24) 0/var(--pct,50%) 100% no-repeat,rgba(255,255,255,.12)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:4px solid #A98BFF}
+input[type=range].gold::-webkit-slider-thumb{border-color:#FBBF24}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:4px solid #A98BFF}
+input[type=range].gold::-moz-range-thumb{border-color:#FBBF24}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;min-height:34px}
+.chip.on{background:var(--ctl);border-color:transparent;color:#070A14;font-weight:700}
+.chips.gold .chip.on{background:var(--gold)}
+.bigyrs{font-size:30px;font-weight:800;margin-bottom:4px}.bigyrs small{font-size:16px;color:var(--text2);font-weight:500}
+.err{color:var(--coral);font-size:13px;margin-top:6px}
+
+/* ---------- Results ---------- */
+.hero{padding:6px 0 18px}
+.hero .k{color:var(--text2);text-transform:uppercase;letter-spacing:.1em;font-size:12px}
+.hero .v{font-size:clamp(40px,8vw,68px);font-weight:800;line-height:1.1;margin:6px 0}
+.hero .v small{font-size:.35em;font-weight:600}
+.cards4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.cards4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cc{background:rgba(7,10,20,.5);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;padding:12px 14px;min-width:0}
+.cc small{display:block;color:var(--muted);font-size:12px}
+.cc b{display:block;font-size:20px;color:var(--c);overflow-wrap:anywhere;margin:2px 0}
+.cc span{font-size:12px;color:var(--text2)}
+h3.sec{font-size:16px;margin:22px 0 10px}
+.stack{display:flex;height:26px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.08)}
+.stack i{display:block;height:100%;transition:width .3s}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px;color:var(--text2)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c);margin-right:6px}
+.eq{margin-top:10px;font-size:14px;color:var(--text2)}
+.tiles6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:600px){.tiles6{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:rgba(7,10,20,.5);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.tile small{display:block;color:var(--muted);font-size:12px}.tile b{font-size:16px;overflow-wrap:anywhere}
+
+/* ---------- Explainer etc. ---------- */
+.dashed{display:inline-block;border:1px dashed var(--muted);border-radius:8px;padding:3px 10px;font-size:12px;color:var(--text2);margin-top:10px}
+.tiles4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+@media (max-width:960px){.tiles4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.tiles4{grid-template-columns:1fr}}
+.tiles4 .tile h4{font-size:13px;color:var(--text2);font-weight:600;margin-bottom:4px}
+.tiles4 .tile .bv{font-size:22px;font-weight:800;margin-bottom:6px;display:block}
+.tiles4 .tile p{font-size:13px;color:var(--text2)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{color:var(--muted);font-weight:600;text-align:right;padding:8px 10px;white-space:nowrap;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 10px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:960px){.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:600px){.how{display:none}}
+.scroll{overflow-x:auto}
+.code{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;margin:12px 0;overflow-x:auto;white-space:pre}
+.sel{display:inline-block;margin-left:8px;font-size:11px;background:var(--ctl);color:#070A14;border-radius:999px;padding:1px 8px;font-weight:700}
+tr.hi td{background:rgba(169,139,255,.12)}
+.link{background:none;border:0;color:var(--blue);font:inherit;cursor:pointer;text-decoration:underline;padding:0}
+.cta{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.cta h2{font-size:20px}
+.cbtn{background:var(--ctl);border:0;color:#070A14;font:inherit;font-weight:800;border-radius:999px;padding:11px 22px;cursor:pointer}
+details.ref summary{cursor:pointer;font-weight:700;font-size:17px}
+.notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.notes{grid-template-columns:1fr}}
+.notes .panel h4{margin-bottom:6px}.notes p{color:var(--text2);font-size:14px}
+.disc{color:var(--muted);font-size:13px}.disc h4{color:var(--text2);margin-bottom:6px}
+footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:6px}
+
+/* ---------- Audit dialog ---------- */
+dialog{width:min(1100px,96vw);max-height:92vh;background:linear-gradient(160deg,var(--p1),var(--p2));color:var(--text);border:1px solid var(--line);border-radius:18px;padding:0;overflow:hidden}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+.dh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dh h2{font-size:20px}
+.x{background:rgba(255,255,255,.08);border:0;color:var(--text);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}
+.db{padding:18px 20px 24px;overflow:auto;max-height:calc(92vh - 70px)}
+.achips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.achips span{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--text2)}
+.grp td{background:rgba(255,255,255,.05);font-weight:700;color:var(--text2);text-align:left}
+tr.key td{background:rgba(169,139,255,.14);font-weight:700}
+td.ctr,th.ctr{text-align:center}
+td.fm{text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--text2)}
+.fixed{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+.fixed th{position:sticky;top:0;background:#141b34}
+.checks{display:grid;gap:8px;margin:14px 0}
+.chk{display:flex;gap:10px;align-items:flex-start;background:rgba(7,10,20,.5);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.chk i{font-style:normal;font-weight:800;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:13px}
+.chk i.ok{background:var(--sky);color:#070A14}.chk i.bad{background:var(--amber);color:#070A14}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="pills"><span class="pill">Singapore SRS</span><span class="pill">Educational Simulation</span></div>
+  <h1>SRS Retirement <span class="netg">Income</span> Calculator</h1>
+  <p class="sub">Turn your SRS balance into an estimated monthly retirement income — and see exactly which half is <span class="sky">tax-free</span> and which half is <span class="coral">taxable</span>.</p>
+</header>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="dash">
+  <div class="panel">
+    <div class="ph"><h2>Your SRS Plan</h2><button class="ghost" id="reset">Reset assumptions</button></div>
+    <div class="f"><label class="l" for="bal">SRS Balance at Retirement</label>
+      <div class="money"><b>S$</b><input id="bal" inputmode="numeric" autocomplete="off"></div>
+      <p class="help">Your estimated SRS portfolio value when withdrawals begin.</p></div>
+    <div class="f"><label class="l" for="retR">Expected Annual Return</label>
+      <div class="row"><input type="range" id="retR" min="0" max="12" step="0.1"><input class="num" type="number" id="retN" min="0" max="12" step="0.1" aria-label="Expected annual return, percent"></div>
+      <div class="chips" id="retC"></div></div>
+    <div class="f"><label class="l" for="yrR">Withdrawal Period</label>
+      <div class="bigyrs"><span id="yrBig"></span> <small id="moBig"></small></div>
+      <div class="row"><input type="range" id="yrR" min="1" max="10" step="1"><input class="num" type="number" id="yrN" min="1" max="10" step="1" aria-label="Withdrawal period in years"></div>
+      <p class="help">SRS allows penalty-free withdrawals to be spread over a maximum of 10 years.</p></div>
+    <div class="f" style="margin-bottom:0"><label class="l" for="taxR">Estimated Personal Tax Rate</label>
+      <div class="row"><input type="range" class="gold" id="taxR" min="0" max="24" step="0.5"><input class="num" type="number" id="taxN" min="0" max="24" step="0.5" aria-label="Estimated tax rate, percent"></div>
+      <div class="chips gold" id="taxC"></div>
+      <p class="help">Applied only to the taxable 50% of each withdrawal. Your actual effective tax rate depends on your total chargeable income.</p></div>
+  </div>
+
+  <div class="panel" aria-live="polite">
+    <div class="ph"><h2>Estimated Retirement Income</h2></div>
+    <div class="hero"><div class="k">Estimated Net Monthly Income</div>
+      <div class="v"><span class="netg" id="heroV"></span> <small class="t2">/ month</small></div>
+      <div class="t2" id="heroS"></div></div>
+    <div class="cards4" id="cards4"></div>
+    <h3 class="sec">Where every withdrawal dollar goes</h3>
+    <div class="stack" id="stack"></div><div class="legend" id="legend"></div><div class="eq" id="eq"></div>
+    <h3 class="sec">Withdrawal Summary</h3>
+    <div class="tiles6" id="tiles6"></div>
+  </div>
+</div>
+
+<!-- ===== WHAT IS THE SRS ===== -->
+<section class="panel">
+  <h2>What is the SRS?</h2>
+  <p class="t2" style="margin-top:8px;max-width:80ch">The Supplementary Retirement Scheme (SRS) is a voluntary retirement account that sits alongside CPF. Contributions earn tax relief in the year you contribute, and the money can be invested. The rules reward leaving the money until retirement and drawing it down gradually.</p>
+  <span class="dashed">Rules as understood October 2026 — verify with IRAS before relying on them</span>
+  <div class="tiles4">
+    <div class="tile"><h4>When you can withdraw</h4><b class="bv">Age 62 – 64</b>
+      <table style="font-size:12px"><tr><td>First contribution before 1 Jul 2022</td><td>62</td></tr><tr><td>1 Jul 2022 – 30 Jun 2026</td><td>63</td></tr><tr><td>From 1 Jul 2026</td><td>64</td></tr></table></div>
+    <div class="tile"><h4>How long you have</h4><b class="bv">10 years</b><p>The 10-year window starts at the first penalty-free withdrawal. Any balance left at the end is treated as withdrawn then, and taxed on that basis.</p></div>
+    <div class="tile"><h4>How it is taxed</h4><b class="bv"><span class="sky">50% tax-free</span><br><span class="coral">50% taxable</span></b></div>
+    <div class="tile"><h4>If you withdraw early</h4><b class="bv">100% + 5%</b><p>Fully taxable plus a 5% penalty, except in specific cases such as death, medical grounds or bankruptcy, and for certain foreigners.</p></div>
+  </div>
+</section>
+
+<!-- ===== BREAKDOWN + HOW ===== -->
+<section class="two">
+  <div class="panel"><h2>Detailed Breakdown</h2>
+    <h3 class="sec">Monthly</h3><div class="scroll"><table id="tM"></table></div>
+    <h3 class="sec">Annual</h3><div class="scroll"><table id="tA"></table></div></div>
+  <div class="panel"><h2>How this calculation works</h2>
+    <p class="t2" style="margin-top:8px">Your balance keeps earning the assumed return while level monthly withdrawals bring it to zero by the end of the period. Each withdrawal is split 50% non-taxable and 50% taxable. The tax rate applies only to the taxable half, so the effective tax on the whole withdrawal is half the tax rate.</p>
+    <div class="code">PMT = (r × PV) ÷ [1 − (1 + r)^(−n)]
+
+PV = starting SRS balance
+r  = annual return ÷ 12 (as a decimal)
+n  = years × 12 payments</div>
+    <button class="link" data-audit>Show me the maths, step by step</button></div>
+</section>
+
+<!-- ===== SCENARIOS ===== -->
+<section class="panel"><h2>Return Scenarios</h2>
+  <p class="help" style="margin-bottom:10px">Same balance, period and tax rate. Only the assumed return changes.</p>
+  <div class="scroll"><table id="tS"></table></div></section>
+
+<!-- ===== AUDIT CTA ===== -->
+<section class="panel cta"><div><h2>Audit the numbers — show me the maths</h2><p class="t2">Every step, a year-by-year drawdown and reconciliation checks, recalculated live from your inputs.</p></div>
+  <button class="cbtn" data-audit>Open audit trail</button></section>
+
+<!-- ===== TAX REFERENCE ===== -->
+<section class="panel"><details class="ref"><summary>Singapore Personal Income Tax — Quick Reference</summary>
+  <p class="muted" style="margin:10px 0">Simplified reference · resident rates from YA2024 onwards</p>
+  <div class="two" id="taxRef"></div>
+  <p class="help" style="margin-top:12px">This table is NOT used in the calculation. The calculator applies the rate you select, and only to the taxable 50%. Actual tax depends on total chargeable income, deductions, reliefs, residency status and prevailing IRAS rules.</p></details></section>
+
+<!-- ===== KEY NOTES ===== -->
+<section class="notes">
+  <div class="panel"><h4><span class="sky">50% Tax-Free</span>, <span class="coral">50% Taxable</span></h4><p>For withdrawals at or after retirement age, half of each withdrawal is taxable income and half is not taxed.</p></div>
+  <div class="panel"><h4>Withdrawal Period</h4><p>Spreading withdrawals over more years lowers the taxable income recognised each year, which can keep you in a lower tax band.</p></div>
+  <div class="panel"><h4>Investment Returns</h4><p>Actual returns vary; fees, volatility and sequence-of-returns risk can change real outcomes.</p></div>
+</section>
+
+<section class="panel disc"><h4>Important Disclaimer</h4>
+  <p>This calculator is an educational simulation based on Singapore's SRS framework and does not constitute financial, investment or tax advice. Results are estimates based on the assumptions entered and do not represent guaranteed investment returns or actual tax liabilities. SRS regulations, withdrawal rules, tax rates and tax treatment may change. Your actual tax liability also depends on your total taxable income, tax residency, deductions, reliefs and other circumstances. Please verify current SRS and tax rules with IRAS or an appropriately qualified professional before making financial decisions.</p></section>
+
+<footer><span>Singapore SRS Retirement Income Calculator · For educational purposes only.</span><span>Calculation methodology: level monthly withdrawal with assumed portfolio return.</span><button class="link" data-audit style="text-align:left">Show me the maths (audit trail)</button></footer>
+</div>
+
+<!-- ===== AUDIT DIALOG ===== -->
+<dialog id="audit" aria-labelledby="auditT">
+  <div class="dh"><h2 id="auditT">Audit trail</h2><button class="x" id="auditX" aria-label="Close">✕</button></div>
+  <div class="db" id="auditB"></div>
+</dialog>
+
+<script>
+/* ===== SETTINGS ===== */
+const DEFAULTS = { bal: 200000, ret: 6, years: 10, tax: 10 };
+const TAXABLE_SHARE = 0.5;                       // 50% of each withdrawal is taxable
+const BANDS = [["First S$20,000","0%"],["Next S$10,000","2%"],["Next S$10,000","3.5%"],["Next S$40,000","7%"],["Next S$40,000","11.5%"],["Next S$40,000","15%"],["Next S$40,000","18%"],["Next S$40,000","19%"],["Next S$40,000","19.5%"],["Next S$40,000","20%"],["Next S$180,000","22%"],["Next S$500,000","23%"],["Above S$1,000,000","24%"]];
+const state = { ...DEFAULTS };
+const $ = id => document.getElementById(id);
+
+/* ===== FORMATTING ===== */
+const nf0 = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("en-SG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const clean = v => (!isFinite(v) || Math.abs(v) < 0.005) ? 0 : v;       // never show NaN or -S$0.00
+const formatCurrency = (v, dec = 2) => "S$" + (dec ? nf2 : nf0).format(clean(v));
+const fmt0 = v => formatCurrency(v, 0);
+const pctTxt = v => parseFloat(v.toFixed(2)) + "%";
+
+/* ===== THE MATHS ===== */
+// PMT = (r x PV) / [1 - (1 + r)^-n]; if r = 0 then PMT = PV / n
+function calculatePMT(pv, annualPct, years) {
+  const r = annualPct / 100 / 12, n = years * 12;
+  if (!(pv > 0) || n <= 0) return 0;
+  return r === 0 ? pv / n : (r * pv) / (1 - Math.pow(1 + r, -n));
+}
+// Split one level withdrawal into the tax-free half, the taxable half, tax and net income.
+function calculateScenario(pv, annualPct, years, taxPct) {
+  const pmt = calculatePMT(pv, annualPct, years);
+  const nonTax = pmt * (1 - TAXABLE_SHARE), taxable = pmt * TAXABLE_SHARE;
+  const tax = taxable * taxPct / 100, net = pmt - tax;
+  return { pmt, nonTax, taxable, tax, net, eff: pmt > 0 ? tax / pmt : 0 };
+}
+// Month-by-month drawdown: growth first, then the withdrawal at month end.
+function buildSchedule(pv, annualPct, years, taxPct) {
+  const r = annualPct / 100 / 12, s = calculateScenario(pv, annualPct, years, taxPct);
+  let bal = pv; const months = [], yearsArr = [];
+  for (let y = 1; y <= years; y++) {
+    const y0 = bal; let g = 0;
+    for (let k = 1; k <= 12; k++) {
+      const open = bal, growth = open * r; bal = open + growth - s.pmt;
+      g += growth; months.push({ m: (y - 1) * 12 + k, open, growth, wd: s.pmt, close: bal, nonTax: s.nonTax, taxable: s.taxable, tax: s.tax, net: s.net });
+    }
+    yearsArr.push({ y, open: y0, growth: g, wd: s.pmt * 12, close: bal, nonTax: s.nonTax * 12, taxable: s.taxable * 12, tax: s.tax * 12, net: s.net * 12 });
+  }
+  return { s, months, years: yearsArr, end: bal };
+}
+// Keep every input inside a sensible range.
+function validateInputs() {
+  state.bal = clamp(Math.round(state.bal) || 0, 0, 1e12);
+  state.ret = clamp(+state.ret || 0, 0, 12);
+  state.years = clamp(Math.round(state.years) || 1, 1, 10);
+  state.tax = clamp(+state.tax || 0, 0, 24);
+}
+function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+
+/* ===== RESULTS ===== */
+let shown = 0, anim = null;
+function countTo(target) {                         // smooth count-up of the hero number
+  cancelAnimationFrame(anim);
+  const from = shown, t0 = performance.now(), reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const step = now => {
+    const p = reduce ? 1 : Math.min(1, (now - t0) / 450), e = 1 - Math.pow(1 - p, 3);
+    shown = from + (target - from) * e; $("heroV").textContent = formatCurrency(shown);
+    if (p < 1) anim = requestAnimationFrame(step); else { shown = target; $("heroV").textContent = formatCurrency(target); }
+  };
+  anim = requestAnimationFrame(step);
+}
+function updateResults() {
+  validateInputs();
+  const { bal, ret, years, tax } = state, s = calculateScenario(bal, ret, years, tax), n = years * 12;
+  countTo(s.net);
+  $("heroS").textContent = `After estimated tax · ${years} year${years > 1 ? "s" : ""} of level withdrawals · effective tax on total withdrawal ${(s.eff * 100).toFixed(1)}%`;
+  const card = (t, v, sub, c) => `<div class="cc" style="--c:${c}"><small>${t}</small><b>${formatCurrency(v)}</b><span>${sub}</span></div>`;
+  $("cards4").innerHTML = card("Gross Monthly", s.pmt, "Total withdrawal", "#fff") + card("Non-Taxable Portion", s.nonTax, "50% · tax-free", "var(--sky)") + card("Taxable Portion", s.taxable, "50% · added to income", "var(--coral)") + card("Estimated Tax", s.tax, `${pctTxt(tax)} × taxable portion`, "var(--amber)");
+  const keep = s.taxable - s.tax, w = v => s.pmt > 0 ? v / s.pmt * 100 : 0;
+  $("stack").innerHTML = `<i style="width:${w(s.nonTax)}%;background:var(--sky)"></i><i style="width:${w(keep)}%;background:var(--coral)"></i><i style="width:${w(s.tax)}%;background:var(--amber)"></i>`;
+  $("legend").innerHTML = `<span style="--c:var(--sky)">Non-taxable ${formatCurrency(s.nonTax)}</span><span style="--c:var(--coral)">Taxable, kept after tax ${formatCurrency(keep)}</span><span style="--c:var(--amber)">Tax ${formatCurrency(s.tax)}</span>`;
+  $("eq").innerHTML = `Gross <b>${formatCurrency(s.pmt)}</b> − Tax <b class="amber">${formatCurrency(s.tax)}</b> = Net <b class="netg">${formatCurrency(s.net)}</b>`;
+  const t = (a, b) => `<div class="tile"><small>${a}</small><b>${b}</b></div>`;
+  $("tiles6").innerHTML = t("Starting SRS Balance", fmt0(bal)) + t("Expected Return", pctTxt(ret)) + t("Withdrawal Period", `${years} year${years > 1 ? "s" : ""}`) + t("Number of Payments", n) + t("Tax Treatment", `<span class="sky">50% tax-free</span> · <span class="coral">50% taxable</span>`) + t("Estimated Tax Rate", pctTxt(tax));
+  // breakdown tables
+  const rows = k => [["Gross withdrawal", "PMT formula", s.pmt * k, "#fff", ""], ["Non-Taxable Portion", "Gross × 50%", s.nonTax * k, "var(--sky)", " <span class='pill' style='color:var(--sky)'>tax-free</span>"], ["Taxable Portion", "Gross × 50%", s.taxable * k, "var(--coral)", ""], ["Estimated Tax", "Taxable × rate", s.tax * k, "var(--amber)", ""], ["Net Income", "Gross − Tax", s.net * k, "", ""]]
+    .map(r => `<tr><td>${r[0]}${r[4]}</td><td class="how muted">${r[1]}</td><td style="font-weight:700;${r[3] ? "color:" + r[3] : ""}">${r[0] === "Net Income" ? `<span class="netg">${formatCurrency(r[2])}</span>` : formatCurrency(r[2])}</td></tr>`).join("");
+  const head = "<tr><th>Item</th><th class='how'>How</th><th>Amount</th></tr>";
+  $("tM").innerHTML = head + rows(1); $("tA").innerHTML = head + rows(12);
+  // scenarios
+  const sc = [["Conservative", 4], ["Base", 6], ["Growth", 8]];
+  $("tS").innerHTML = "<tr><th>Scenario</th><th>Return</th><th>Gross Monthly</th><th>Non-Taxable 50%</th><th>Taxable 50%</th><th>Est. Tax</th><th>Net Monthly</th></tr>" + sc.map(([n, r]) => {
+    const x = calculateScenario(bal, r, years, tax), on = Math.abs(ret - r) < 1e-9;
+    return `<tr class="${on ? "hi" : ""}"><td>${n}${on ? '<span class="sel">Selected</span>' : ""}</td><td>${r}%</td><td>${formatCurrency(x.pmt)}</td><td class="sky">${formatCurrency(x.nonTax)}</td><td class="coral">${formatCurrency(x.taxable)}</td><td class="amber">${formatCurrency(x.tax)}</td><td><b>${formatCurrency(x.net)}</b></td></tr>`;
+  }).join("");
+  // controls
+  $("retR").value = $("retN").value = ret; $("retR").style.setProperty("--pct", ret / 12 * 100 + "%");
+  $("yrR").value = $("yrN").value = years; $("yrR").style.setProperty("--pct", (years - 1) / 9 * 100 + "%");
+  $("taxR").value = $("taxN").value = tax; $("taxR").style.setProperty("--pct", tax / 24 * 100 + "%");
+  $("yrBig").textContent = `${years} year${years > 1 ? "s" : ""} /`; $("moBig").textContent = `${n} months`;
+  document.querySelectorAll("#retC .chip").forEach(b => b.classList.toggle("on", +b.dataset.v === ret));
+  document.querySelectorAll("#taxC .chip").forEach(b => b.classList.toggle("on", +b.dataset.v === tax));
+  if ($("audit").open) renderAudit();
+}
+
+/* ===== AUDIT TRAIL ===== */
+function renderAudit() {
+  const { bal, ret, years, tax } = state, sch = buildSchedule(bal, ret, years, tax), s = sch.s;
+  const r = ret / 100 / 12, n = years * 12, f = formatCurrency;
+  const step = (i, name, formula, nums, res, key) => `<tr class="${key ? "key" : ""}"><td class="ctr">${i}</td><td style="text-align:left">${name}</td><td class="fm">${formula}</td><td class="fm">${nums}</td><td>${res}</td></tr>`;
+  const grp = t => `<tr class="grp"><td colspan="5">${t}</td></tr>`;
+  let A;
+  if (ret === 0) A = step(1, "Annual return as a decimal", "return ÷ 100", `${ret} ÷ 100`, "0") + step(2, "Monthly rate r", "annual ÷ 12", "0 ÷ 12", "0") + step(3, "Number of payments n", "years × 12", `${years} × 12`, n) + step(4, "Gross monthly withdrawal (0% return)", "PV ÷ n", `${f(bal)} ÷ ${n}`, f(s.pmt), true);
+  else { const g = Math.pow(1 + r, n), d = Math.pow(1 + r, -n);
+    A = step(1, "Annual return as a decimal", "return ÷ 100", `${ret} ÷ 100`, (ret / 100).toFixed(4)) + step(2, "Monthly rate r", "annual ÷ 12", `${(ret / 100).toFixed(4)} ÷ 12`, r.toFixed(6)) + step(3, "Number of payments n", "years × 12", `${years} × 12`, n)
+      + step(4, "Growth factor", "(1 + r)^n", `(1 + ${r.toFixed(6)})^${n}`, g.toFixed(6)) + step(5, "Discount factor", "(1 + r)^−n", `(1 + ${r.toFixed(6)})^−${n}`, d.toFixed(6)) + step(6, "Denominator", "1 − (1 + r)^−n", `1 − ${d.toFixed(6)}`, (1 - d).toFixed(6))
+      + step(7, "Numerator", "r × PV", `${r.toFixed(6)} × ${f(bal, 0)}`, (r * bal).toFixed(2)) + step(8, "Gross monthly withdrawal", "numerator ÷ denominator", `${(r * bal).toFixed(2)} ÷ ${(1 - d).toFixed(6)}`, f(s.pmt), true); }
+  const B = step(9, "Non-taxable portion", "gross × 50%", `${f(s.pmt)} × 50%`, f(s.nonTax)) + step(10, "Taxable portion", "gross × 50%", `${f(s.pmt)} × 50%`, f(s.taxable)) + step(11, "Estimated tax", "taxable × rate", `${f(s.taxable)} × ${pctTxt(tax)}`, f(s.tax)) + step(12, "Net monthly income", "gross − tax", `${f(s.pmt)} − ${f(s.tax)}`, f(s.net), true) + step(13, "Effective tax on total withdrawal", "tax ÷ gross", `${f(s.tax)} ÷ ${f(s.pmt)}`, (s.eff * 100).toFixed(2) + "%");
+  const C = step(14, "Gross annual", "monthly × 12", `${f(s.pmt)} × 12`, f(s.pmt * 12)) + step(15, "Taxable annual", "taxable × 12", `${f(s.taxable)} × 12`, f(s.taxable * 12)) + step(16, "Net annual", "net × 12", `${f(s.net)} × 12`, f(s.net * 12)) + step(17, "Total withdrawn over the period", "gross × n", `${f(s.pmt)} × ${n}`, f(s.pmt * n)) + step(18, "Total estimated tax over the period", "tax × n", `${f(s.tax)} × ${n}`, f(s.tax * n));
+  const tot = k => sch.years.reduce((a, y) => a + y[k], 0);
+  const yrows = sch.years.map(y => `<tr><td class="ctr">${y.y}</td><td>${f(y.open)}</td><td>${f(y.growth)}</td><td>${f(y.wd)}</td><td>${f(y.close)}</td><td class="sky">${f(y.nonTax)}</td><td class="coral">${f(y.taxable)}</td><td class="amber">${f(y.tax)}</td><td>${f(y.net)}</td></tr>`).join("")
+    + `<tr class="key"><td class="ctr">Total</td><td></td><td>${f(tot("growth"))}</td><td>${f(tot("wd"))}</td><td></td><td>${f(tot("nonTax"))}</td><td>${f(tot("taxable"))}</td><td>${f(tot("tax"))}</td><td>${f(tot("net"))}</td></tr>`;
+  const mrows = sch.months.map(m => `<tr><td class="ctr">${m.m}</td><td>${f(m.open)}</td><td>${f(m.growth)}</td><td>${f(m.wd)}</td><td>${f(m.close)}</td></tr>`).join("");
+  const T = 0.01, growthSum = tot("growth");
+  const checks = [
+    [Math.abs(sch.end) <= T, `Balance reaches S$0.00 after the last payment: ${f(sch.end)}`],
+    [Math.abs(bal + growthSum - tot("wd") - sch.end) <= T, `Starting balance + growth − withdrawals = closing balance: ${f(bal)} + ${f(growthSum)} − ${f(tot("wd"))} = ${f(bal + growthSum - tot("wd"))}`],
+    [Math.abs(s.nonTax + s.taxable - s.pmt) <= T, `Non-taxable + taxable = gross: ${f(s.nonTax)} + ${f(s.taxable)} = ${f(s.nonTax + s.taxable)} (gross ${f(s.pmt)})`],
+    [Math.abs(s.pmt - s.tax - s.net) <= T, `Gross − tax = net: ${f(s.pmt)} − ${f(s.tax)} = ${f(s.pmt - s.tax)} (net ${f(s.net)})`]];
+  $("auditB").innerHTML = `<div class="achips"><span>Balance ${fmt0(bal)}</span><span>Return ${pctTxt(ret)}</span><span>${years} years (${n} payments)</span><span>Tax rate ${pctTxt(tax)}</span></div>
+    <div class="scroll"><table><tr><th class="ctr">#</th><th style="text-align:left">Step</th><th style="text-align:left">Formula</th><th style="text-align:left">With your numbers</th><th>Result</th></tr>
+    ${grp("A. Monthly withdrawal")}${A}${grp("B. Tax treatment")}${B}${grp("C. Totals")}${C}</table></div>
+    <h3 class="sec">Year-by-year drawdown schedule</h3>
+    <div class="scroll"><table style="min-width:900px"><tr><th class="ctr">Year</th><th>Opening Balance</th><th>Investment Growth</th><th>Withdrawals</th><th>Closing Balance</th><th>Non-Taxable 50%</th><th>Taxable 50%</th><th>Est. Tax</th><th>Net Income</th></tr>${yrows}</table></div>
+    <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:700">Show full month-by-month schedule</summary>
+      <div class="fixed"><table><thead><tr><th class="ctr">Month</th><th>Opening</th><th>Growth</th><th>Withdrawal</th><th>Closing</th></tr></thead><tbody>${mrows}</tbody></table></div></details>
+    <h3 class="sec">Reconciliation checks</h3>
+    <div class="checks">${checks.map(c => `<div class="chk"><i class="${c[0] ? "ok" : "bad"}">${c[0] ? "✓" : "!"}</i><span>${c[1]}</span></div>`).join("")}</div>
+    <button class="cbtn" id="csv">Download CSV</button>`;
+  $("csv").onclick = () => {                         // download the monthly schedule
+    const head = "Month,Opening,Growth,Withdrawal,Closing,NonTaxable50,Taxable50,EstTax,NetIncome\n";
+    const body = sch.months.map(m => [m.m, m.open, m.growth, m.wd, m.close, m.nonTax, m.taxable, m.tax, m.net].map((v, i) => i ? clean(v).toFixed(2) : v).join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([head + body], { type: "text/csv" })); a.download = "SRS_drawdown_schedule.csv"; a.click();
+  };
+}
+
+/* ===== CONTROLS ===== */
+[4, 6, 8].forEach(v => { const b = document.createElement("button"); b.className = "chip"; b.dataset.v = v; b.textContent = v + "%"; b.onclick = () => { state.ret = v; updateResults(); }; $("retC").appendChild(b); });
+[0, 5, 10, 15, 20].forEach(v => { const b = document.createElement("button"); b.className = "chip"; b.dataset.v = v; b.textContent = v + "%"; b.onclick = () => { state.tax = v; updateResults(); }; $("taxC").appendChild(b); });
+$("bal").value = nf0.format(state.bal);
+$("bal").addEventListener("input", e => { const d = e.target.value.replace(/\D/g, "").slice(0, 12); state.bal = d ? +d : 0; e.target.value = d ? nf0.format(state.bal) : ""; updateResults(); });
+$("bal").addEventListener("blur", () => { $("bal").value = nf0.format(state.bal); });
+[["retR", "ret"], ["retN", "ret"], ["yrR", "years"], ["yrN", "years"], ["taxR", "tax"], ["taxN", "tax"]].forEach(([id, k]) => $(id).addEventListener("input", e => { state[k] = parseFloat(e.target.value); if (!isFinite(state[k])) state[k] = 0; updateResults(); }));
+$("reset").onclick = () => { Object.assign(state, DEFAULTS); $("bal").value = nf0.format(state.bal); updateResults(); };
+document.querySelectorAll("[data-audit]").forEach(b => b.onclick = () => { renderAudit(); $("audit").showModal(); });
+$("auditX").onclick = () => $("audit").close();
+$("audit").addEventListener("click", e => { if (e.target === $("audit")) $("audit").close(); });
+const half = (a, b) => `<div class="scroll"><table><tr><th>Band</th><th>Rate</th></tr>${BANDS.slice(a, b).map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join("")}</table></div>`;
+$("taxRef").innerHTML = half(0, 7) + half(7, 13);
+updateResults();
+</script>
+</body>
+</html>
