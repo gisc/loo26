@@ -92,6 +92,21 @@ footer{margin-top:20px;color:var(--muted);font-size:18px}
 footer h3{color:var(--text);font-size:18px;margin-bottom:6px}
 footer ul{margin:0 0 12px;padding-left:18px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sg{background:var(--inner);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:10px 6px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;line-height:1.2}
+.sg small{display:block;color:var(--muted);font-size:11px;font-weight:500}
+.sg.on{background:var(--amber);border-color:var(--amber);color:#07080c}.sg.on small{color:#07080c}
+.bigv{font-size:30px;font-weight:900;color:var(--amber);line-height:1}
+.bigv small{font-size:14px;font-weight:600;color:var(--muted);margin-left:6px}
+.real{margin-top:14px;background:rgba(255,198,87,.07);border:1px solid rgba(255,198,87,.3);border-radius:14px;padding:14px 16px}
+.real h3{color:var(--amber);font-size:15px;margin-bottom:8px}
+.real .stats{margin-top:0;grid-template-columns:repeat(3,1fr)}
+@media (max-width:560px){.real .stats{grid-template-columns:1fr}}
+.real p{color:var(--muted);font-size:13px;margin-top:8px}
+input.am{background:linear-gradient(90deg,var(--amber) var(--pct,50%),#2f3547 var(--pct,50%))}
+input.am::-webkit-slider-thumb{border-color:var(--amber)}
+input.am::-moz-range-thumb{border-color:var(--amber)}
+td.r{color:var(--amber)}
 /* Singapore red and white: presentation only */
 :root{color-scheme:light;--bg:#fff5f5;--surface:#ffffff;--card:#ffffff;--card1:#ffffff;--card2:#fff0f1;--p1:#ffffff;--p2:#fff7f7;--inner:#fff0f1;--input:#fff7f7;--line:#ecc8cc;--border:#ecc8cc;--warm:#e9a1a8;--text:#292329;--text2:#58515b;--ink:#292329;--fg:#292329;--muted:#645c67;--mut:#645c67;--dim:#645c67;--gold:#b41e35;--gold2:#b41e35;--red:#bd2338;--pink:#ba2040;--blue:#b41e35;--violet:#95243c;--teal:#087f79;--green:#087b54;--purple:#7944a2;--amber:#94600d;--sky:#9e2038;--coral:#ab441f;--grad:linear-gradient(135deg,#d51b36,#b01431);--net:linear-gradient(90deg,#d51b36,#a81737);--ctl:linear-gradient(90deg,#d51b36,#b01431)}
 body{background:radial-gradient(ellipse 800px 400px at 100% 0,rgba(239,51,64,.12),transparent 70%),#fff5f5!important;color:var(--text);background-attachment:fixed;border-top:7px solid #ef3340}
@@ -128,6 +143,20 @@ input[type=range]{accent-color:#b41e35}input[type=range]::-webkit-slider-thumb{b
 .hero{background:linear-gradient(135deg,#d51b36,#ae1636)!important;border-radius:24px}.hero h1,.hero p{color:#fff!important}.hero .pill{background:#fff;color:#b41e35}.card{border-radius:24px}.headline{border-radius:24px}
 
 .purpose-intro{background:#fff;border-left:4px solid #ef3340;border-radius:6px;padding:14px 16px;margin:16px 0 24px;color:#58515b;font-size:18px;line-height:1.55;max-width:76ch}
+
+/* inflation controls on the red/white theme */
+:root{--amber:#9a5200}
+.sg{background:#fff7f7!important;color:#292329!important;border-color:#ecc8cc!important;min-height:64px;font-size:18px!important}
+.sg small{font-size:18px!important;color:#58515b!important}
+.sg.on{background:#b41e35!important;border-color:#b41e35!important;color:#fff!important}.sg.on small{color:#fff!important}
+.bigv{font-size:30px!important;color:#9a5200}.bigv small{font-size:18px!important}
+.real{background:#fff6e8;border-color:#e0b36a}.real h3{color:#8a4a00;font-size:22px!important}.real p{font-size:20px!important;color:#514953}
+input.am{background:linear-gradient(90deg,#9a5200 var(--pct,50%),#e4bdc4 var(--pct,50%))!important}
+input.am::-webkit-slider-thumb{border-color:#9a5200!important}input.am::-moz-range-thumb{border-color:#9a5200!important}
+.annuity{background:#fff6e8}.annuity h3{color:#8a4a00}
+td.r{color:#8a4a00}
+.seg{display:grid!important;grid-template-columns:1fr 1fr}
+@media(max-width:560px){.seg{grid-template-columns:1fr!important}.real .stats{grid-template-columns:minmax(0,1fr)!important}}
 </style>
 <style id="elderly-mobile">
 /* Larger reading type and phone-friendly controls; calculations unchanged. */
@@ -176,7 +205,8 @@ body{--muted:#514953;--mut:#514953;--dim:#514953;--text2:#514953}
   <p>Turn your CPF Ordinary Account into a steady monthly income — the same amount every month, for as many years as you choose.</p>
 </header>
 
-<p class="purpose-intro">Estimate a steady monthly payout from your CPF Ordinary Account balance. Choose when payouts start and how many years they last.</p>
+<p class="purpose-intro">Estimate a steady monthly payout from your CPF Ordinary Account balance, and see what it is worth after inflation. Choose when payouts start, how many years they last, and whether they rise each year.</p>
+
 <div class="layout">
   <!-- ===== INPUTS ===== -->
   <div class="card">
@@ -195,6 +225,17 @@ body{--muted:#514953;--mut:#514953;--dim:#514953;--text2:#514953}
       <div class="step"><span class="num" style="background:var(--pink)">3</span>How many years to draw</div>
       <div class="yrs" id="yrs"></div>
     </div>
+    <div class="group">
+      <div class="step"><span class="num" style="background:var(--amber)">4</span>Adjust for inflation</div>
+      <div class="bigv"><span id="inflTxt">2.5%</span><small>a year</small></div>
+      <input type="range" class="am" id="infl" min="0" max="6" step="0.1" value="2.5" aria-label="Inflation rate a year">
+      <div class="bigv" style="font-size:22px;margin-top:10px"><span id="todayTxt">45</span><small>your age today</small></div>
+      <input type="range" class="am" id="today" min="20" max="65" step="1" value="45" aria-label="Your age today">
+      <div class="seg" id="mode">
+        <button class="sg on" data-m="level">Same amount<small>every month</small></button>
+        <button class="sg" data-m="rising">Rises with inflation<small>steps up each year</small></button>
+      </div>
+    </div>
     <div class="rate"><div><b>CPF OA interest rate</b><small>Guaranteed minimum</small></div><b class="t" id="rateTxt"></b></div>
   </div>
 
@@ -211,6 +252,15 @@ body{--muted:#514953;--mut:#514953;--dim:#514953;--text2:#514953}
         <div class="stat"><small>Total you receive</small><b style="color:var(--violet)" id="sTotal"></b></div>
         <div class="stat"><small>Interest earned</small><b style="color:var(--teal)" id="sInt"></b></div>
         <div class="stat"><small>Payouts end at</small><b style="color:var(--pink)" id="sEnd"></b></div>
+      </div>
+      <div class="real">
+        <h3>In today's money <span id="realNote" style="color:var(--muted);font-weight:600"></span></h3>
+        <div class="stats">
+          <div class="stat"><small id="rl1"></small><b style="color:var(--amber)" id="r1"></b></div>
+          <div class="stat"><small id="rl2"></small><b style="color:var(--amber)" id="r2"></b></div>
+          <div class="stat"><small>Total you receive</small><b style="color:var(--amber)" id="r3"></b></div>
+        </div>
+        <p id="realTxt"></p>
       </div>
       <div class="annuity">
         <h3>What is an annuity?</h3>
@@ -235,7 +285,7 @@ body{--muted:#514953;--mut:#514953;--dim:#514953;--text2:#514953}
       <details>
         <summary>Year-by-year breakdown <span style="color:var(--muted);font-size:14px;font-weight:600">· Show the full schedule</span></summary>
         <div class="tbl"><table>
-          <thead><tr><th>Year</th><th>Age</th><th>Start balance</th><th>Interest</th><th>Drawn</th><th>End balance</th></tr></thead>
+          <thead><tr><th>Year</th><th>Age</th><th>Start balance</th><th>Interest</th><th>Per month</th><th>Drawn</th><th>In today's money</th><th>End balance</th></tr></thead>
           <tbody id="rows"></tbody>
         </table></div>
       </details>
@@ -248,6 +298,7 @@ body{--muted:#514953;--mut:#514953;--dim:#514953;--text2:#514953}
   <ul>
     <li>Your monthly amount is worked out so that your balance, plus the interest it keeps earning, is shared out evenly over the years you chose.</li>
     <li>Uses the guaranteed 2.5% a year OA rate. CPF's extra interest (up to 2% more on your first $60,000) is not included, so real results may be slightly better.</li>
+    <li>Inflation: in "Same amount" mode the dollars you receive never change, but they buy less each year, so the page also shows what they are worth in today's money (÷ (1 + inflation) for each year from today). In "Rises with inflation" mode the first payout is lower and then steps up once a year by the inflation rate, using the same OA balance. Inflation is an assumption you can change; MAS core inflation has run near 2% over the long term.</li>
     <li>Assumes you draw at the end of each month. Actual OA withdrawal rules depend on your age and the amount set aside in your Retirement Account. Check cpf.gov.sg for your own situation.</li>
   </ul>
   <p>For education only. This is not financial advice. © <span id="copy"></span>.</p>
@@ -269,20 +320,29 @@ function monthlyPayout(balance, years) {
   const r = OA_RATE / 12, n = years * 12;
   return balance <= 0 ? 0 : balance * r / (1 - Math.pow(1 + r, -n));
 }
+// First monthly payout when the payout steps up by g each year (g = 0 is the plain annuity above).
+function startPayout(balance, years, g) {
+  if (g === 0) return monthlyPayout(balance, years);
+  const r = OA_RATE / 12; let pv = 0;
+  for (let m = 1; m <= years * 12; m++) pv += Math.pow(1 + g, Math.floor((m - 1) / 12)) / Math.pow(1 + r, m);
+  return balance <= 0 ? 0 : balance / pv;
+}
 // Walk through every month (interest first, then the payout at month end).
 function buildSchedule(balance, years) {
-  const r = OA_RATE / 12, pay = monthlyPayout(balance, years);
-  let bal = balance, months = [{ m: 0, bal }], rows = [];
+  const r = OA_RATE / 12, g = growth(), pay = startPayout(balance, years, g), toStart = Math.max(0, state.age - state.today);
+  let bal = balance, months = [{ m: 0, bal }], rows = [], total = 0, totalReal = 0;
   for (let y = 1; y <= years; y++) {
-    const start = bal; let interest = 0;
+    const start = bal; let interest = 0, p = pay * Math.pow(1 + g, y - 1);
     for (let k = 0; k < 12; k++) {
-      const i = bal * r; interest += i; bal = bal + i - pay;
+      const i = bal * r; interest += i; bal = bal + i - p;
       months.push({ m: (y - 1) * 12 + k + 1, bal: Math.max(0, bal) });
     }
     if (Math.abs(bal) < 0.01) bal = 0;           // within 1 cent of zero shows as $0
-    rows.push({ year: y, start, interest, drawn: pay * 12, end: bal });
+    const real = p * 12 * realF(toStart + y - 1);
+    total += p * 12; totalReal += real;
+    rows.push({ year: y, start, interest, perMonth: p, drawn: p * 12, real, end: bal });
   }
-  return { pay, months, rows, total: pay * years * 12 };
+  return { pay, months, rows, total, totalReal, lastPay: pay * Math.pow(1 + g, years - 1), toStart };
 }
 
 /* ===== FORMATTING ===== */
@@ -295,7 +355,9 @@ function shortMoney(v) {
 const $ = id => document.getElementById(id);
 
 /* ===== STATE ===== */
-const state = { bal: 300000, age: 65, years: 20 };
+const state = { bal: 300000, age: 65, years: 20, infl: 2.5, today: 45, mode: "level" };
+const growth = () => state.mode === "rising" ? state.infl / 100 : 0;      // yearly step-up of the payout
+const realF = yrs => Math.pow(1 + state.infl / 100, -yrs);                 // today's-money factor
 
 /* ===== DRAWING ===== */
 function drawChart(sch) {
@@ -318,9 +380,19 @@ function drawChart(sch) {
 
 function update() {
   const { bal, age, years } = state, sch = buildSchedule(bal, years), pay = sch.pay;
+  const g = growth(), n0 = sch.toStart, nEnd = n0 + years - 1;
   $("payout").textContent = money(pay);
-  $("range").textContent = `every month from age ${age} to ${age + years} (${years} years)`;
+  $("range").textContent = g ? `a month at age ${age}, stepping up ${state.infl}% a year to ${money(sch.lastPay)} a month by age ${age + years - 1}` : `every month from age ${age} to ${age + years} (${years} years)`;
   $("sYear").textContent = money(pay * 12);
+  $("inflTxt").textContent = state.infl.toFixed(1) + "%"; $("todayTxt").textContent = state.today;
+  $("infl").style.setProperty("--pct", (state.infl / 6 * 100) + "%");
+  $("today").max = age; $("today").style.setProperty("--pct", ((state.today - 20) / (age - 20) * 100) + "%");
+  document.querySelectorAll("#mode .sg").forEach(b => b.classList.toggle("on", b.dataset.m === state.mode));
+  $("realNote").textContent = `· ${state.infl.toFixed(1)}% inflation, from age ${state.today}`;
+  $("rl1").textContent = `First payout, age ${age}`; $("r1").textContent = money(pay * realF(n0)) + "/mo";
+  $("rl2").textContent = `Last payout, age ${age + years - 1}`; $("r2").textContent = money(sch.lastPay * realF(nEnd)) + "/mo";
+  $("r3").textContent = money(sch.totalReal);
+  $("realTxt").textContent = g ? "Each year's payout rises with prices, so your buying power stays roughly level. The first payout is lower than in \"Same amount\" mode (" + money(monthlyPayout(bal, years)) + ")." : `The ${money(pay)} you receive never changes, but prices keep rising, so the same cheque buys about ${Math.round((1 - realF(years - 1)) * 100)}% less by the last year of payouts.`;
   $("sTotal").textContent = money(sch.total);
   $("sInt").textContent = money(sch.total - bal);
   $("sEnd").textContent = "Age " + (age + years);
@@ -330,9 +402,9 @@ function update() {
   document.querySelectorAll("#yrs .y").forEach(b => b.classList.toggle("on", +b.dataset.v === years));
   drawChart(sch);
   // comparison bars: the same balance over each period
-  const pays = YEAR_OPTIONS.map(y => monthlyPayout(bal, y)), mx = Math.max(...pays, 1);
+  const pays = YEAR_OPTIONS.map(y => startPayout(bal, y, g)), mx = Math.max(...pays, 1);
   $("bars").innerHTML = YEAR_OPTIONS.map((y, i) => `<div class="col ${y === years ? "on" : ""}" role="button" tabindex="0" data-v="${y}" aria-label="${y} years, ${money(pays[i])} a month"><span class="amt">${money(pays[i])}</span><div class="bar" style="height:${Math.max(2, pays[i] / mx * 160)}px"></div><span class="lab">${y} yrs</span></div>`).join("");
-  $("rows").innerHTML = sch.rows.map(r => `<tr><td>${r.year}</td><td>${age + r.year - 1}</td><td>${money(r.start)}</td><td class="i">+${money(r.interest)}</td><td class="d">−${money(r.drawn)}</td><td class="e">${money(r.end)}</td></tr>`).join("");
+  $("rows").innerHTML = sch.rows.map(r => `<tr><td>${r.year}</td><td>${age + r.year - 1}</td><td>${money(r.start)}</td><td class="i">+${money(r.interest)}</td><td>${money(r.perMonth)}</td><td class="d">−${money(r.drawn)}</td><td class="r">${money(r.real)}</td><td class="e">${money(r.end)}</td></tr>`).join("");
 }
 
 /* ===== CONTROLS ===== */
@@ -349,7 +421,10 @@ $("bal").addEventListener("input", e => {
   e.target.value = d ? state.bal.toLocaleString("en-US") : "";
   update();
 });
-$("age").addEventListener("input", e => { state.age = +e.target.value; update(); });
+$("age").addEventListener("input", e => { state.age = +e.target.value; state.today = Math.min(state.today, state.age); update(); });
+$("infl").addEventListener("input", e => { state.infl = +e.target.value; update(); });
+$("today").addEventListener("input", e => { state.today = Math.min(+e.target.value, state.age); update(); });
+document.querySelectorAll("#mode .sg").forEach(b => b.onclick = () => { state.mode = b.dataset.m; update(); });
 $("bars").addEventListener("click", e => { const c = e.target.closest(".col"); if (c) { state.years = +c.dataset.v; update(); } });
 $("bars").addEventListener("keydown", e => { const c = e.target.closest(".col"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); state.years = +c.dataset.v; update(); } });
 update();
