@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equities Monthly Annuity Estimator</title>
+<style>
+/* ---------- Colours: every colour below comes from these variables ---------- */
+:root{
+  --bg:#000; --card:#0e1014; --card2:#161a21; --ink:#f3f5f8; --muted:#9ba5b4; --dim:#7d8796;
+  --line:#262c37; --gold:#f5c04a; --gold2:#ffd97a; --red:#ff6b5e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums;overflow-x:hidden}
+h1,h2,h3,p{margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px}
+:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+
+/* ---------- Hero ---------- */
+.hero{background:radial-gradient(600px 300px at 0% 0%,rgba(245,192,74,.16),transparent 70%),var(--bg);border-bottom:1px solid var(--line);padding-block:28px 30px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.badge{background:var(--gold);color:#000;font-weight:800;border-radius:8px;padding:3px 9px}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:800;line-height:1.1;margin-top:16px;max-width:20ch;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--gold)}
+.hero p.sub{color:var(--muted);margin-top:12px;max-width:68ch}
+
+/* ---------- Layout ---------- */
+.main{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start;padding-block:24px}
+.panel{position:sticky;top:16px}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}.panel{position:static}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card h2{font-size:18px;font-weight:700;margin-bottom:14px}
+.group{padding-block:16px;border-top:1px solid var(--line)}
+.group:first-of-type{border-top:0;padding-top:0}
+.glabel{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600;margin-bottom:10px}
+
+/* ---------- Input controls ---------- */
+.money{display:flex;align-items:center;gap:8px;background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;cursor:text;transition:border-color .15s,box-shadow .15s}
+.money:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,192,74,.2)}
+.money.bad{border-color:var(--red);box-shadow:none}
+.money b{color:var(--gold);font-size:20px}
+.money input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:inherit;font-size:24px;font-weight:800}
+.money svg{width:16px;height:16px;fill:var(--dim);flex:none}
+.help{color:var(--muted);font-size:13px;margin-top:8px}
+.err{color:var(--red);font-size:13px;margin-top:6px;min-height:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 13px;min-height:34px;font:inherit;font-size:14px;cursor:pointer}
+.chip:hover{border-color:var(--muted)}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
+.other{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:0 6px 0 12px;min-height:34px;color:var(--muted);font-size:13px}
+.other input{width:46px;background:none;border:0;outline:0;color:var(--ink);font:inherit;font-size:14px;text-align:center}
+.other:focus-within{border-color:var(--gold)}
+.pill{background:rgba(245,192,74,.14);color:var(--gold2);border-radius:999px;padding:3px 11px;font-size:13px;font-weight:700}
+.years{font-size:34px;font-weight:800;margin-bottom:6px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--gold) var(--pct,60%),#2a303c var(--pct,60%));outline:0;cursor:pointer;margin:6px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--gold2);border:3px solid #000}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--gold2);border:3px solid #000}
+.scale{display:flex;justify-content:space-between;color:var(--dim);font-size:11px}
+
+/* ---------- Results ---------- */
+.headline{background:linear-gradient(160deg,#241c08,#14110a);border:1px solid #4a3a14;border-radius:16px;padding:22px}
+.kicker{color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700}
+.headline .sentence{font-size:clamp(22px,3.2vw,32px);font-weight:700;line-height:1.25;margin-top:10px;text-wrap:balance}
+.headline .sentence em{font-style:normal;color:var(--gold)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+@media (max-width:560px){.tiles{grid-template-columns:1fr}}
+.tile{background:#000;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile small{display:block;color:var(--muted);font-size:12px}.tile b{font-size:20px}
+.ctitle{font-size:17px;font-weight:700}.ctitle em{font-style:normal;color:var(--gold)}
+.csub{color:var(--muted);font-size:13px;margin:4px 0 14px}
+.chart{position:relative;height:300px;padding-top:26px}
+.plot{position:absolute;left:56px;right:0;top:26px;bottom:44px}
+.gl{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
+.gl span{position:absolute;right:calc(100% + 8px);top:-8px;color:var(--dim);font-size:11px;white-space:nowrap}
+.bcols{position:absolute;inset:0;display:flex;gap:2%;padding-inline:2%}
+.bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0}
+.bval{font-weight:800;font-size:clamp(11px,1.4vw,14px);margin-bottom:5px;white-space:nowrap;position:relative;z-index:1}
+.bar{width:100%;max-width:90px;border-radius:8px 8px 0 0;transition:height .5s ease}
+.xl{position:absolute;left:56px;right:0;bottom:0;height:40px;display:flex;gap:2%;padding-inline:2%}
+.xl div{flex:1;text-align:center;line-height:1.15;padding-top:8px}
+.xl b{display:block;font-size:15px}.xl small{font-size:10px;color:var(--dim);letter-spacing:.1em}
+.rcards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:1100px){.rcards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:699px){.rcards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:399px){.rcards{grid-template-columns:1fr}}
+.rc{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.rc .tag{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.rc .tag i{font-style:normal;color:#000;font-weight:800;border-radius:999px;padding:2px 9px;font-size:13px}
+.rc .m{font-size:clamp(22px,2.4vw,28px);font-weight:800;margin-top:10px;overflow-wrap:anywhere}
+.rc .pm{color:var(--gold);font-size:11px;letter-spacing:.12em;font-weight:700}
+.rc hr{border:0;border-top:1px solid var(--line);margin:12px 0 8px}
+.rc .r{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);padding:2px 0}
+.rc .r b{color:var(--ink);overflow-wrap:anywhere;text-align:right}
+.mbtn{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:0;color:var(--gold);font:inherit;font-size:17px;font-weight:700;cursor:pointer;padding:0;min-height:34px}
+.mbtn span{font-size:24px;transition:transform .2s}
+.mbtn[aria-expanded=true] span{transform:rotate(45deg)}
+.mbody{margin-top:14px}
+.formula{background:#000;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;margin:12px 0;overflow-x:auto;white-space:nowrap}
+.worked{width:100%;border-collapse:collapse;font-size:14px}
+.worked td{padding:8px 4px;border-top:1px solid var(--line)}
+.worked td:last-child{text-align:right;font-weight:700}
+.worked td:first-child{color:var(--muted)}
+.assume{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;list-style:none;margin:0;padding:0}
+@media (max-width:600px){.assume{grid-template-columns:1fr}}
+.assume li{display:flex;gap:10px;align-items:flex-start;color:var(--muted)}
+.assume li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-top:8px}
+.insight{background:var(--card);border:1px solid #4a3a14;border-left:4px solid var(--gold);border-radius:14px;padding:16px 18px;margin-bottom:20px}
+.insight b{color:var(--gold)}
+footer{border-top:1px solid var(--line);color:var(--dim);font-size:12.5px;padding-block:18px 36px;display:flex;flex-direction:column;gap:10px;max-width:100ch}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="brand"><span class="badge">1M65</span><span>Equities Annuity Estimator · AI Finance Course</span></div>
+  <h1>How much could your portfolio <em>pay you every month?</em></h1>
+  <p class="sub">Pick when your income starts and how many years to spread it over. See the level monthly income at five assumed returns, with the portfolio run down to S$0 at the end.</p>
+</div></header>
+
+<div class="wrap">
+<div class="main">
+  <!-- ===== INPUTS ===== -->
+  <aside class="card panel">
+    <h2>Your inputs</h2>
+    <div class="group">
+      <div class="glabel"><label for="pv">Equity portfolio when income starts</label></div>
+      <label class="money" id="moneyBox"><b>S$</b><input id="pv" inputmode="numeric" autocomplete="off" aria-describedby="pvErr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></label>
+      <div class="err" id="pvErr" role="alert"></div>
+      <p class="help">Type your amount here: the total value of your equity portfolio on the day you start drawing income.</p>
+      <div class="chips" id="pvChips"></div>
+    </div>
+    <div class="group">
+      <div class="glabel"><span id="ageLbl">Income starts at age</span></div>
+      <div class="chips" id="ageChips" style="margin-top:0"></div>
+      <div class="chips"><label class="other">other <input id="age" inputmode="numeric" maxlength="3" aria-label="Other starting age, 40 to 90"></label></div>
+      <div class="err" id="ageErr" role="alert"></div>
+    </div>
+    <div class="group">
+      <div class="glabel"><label for="yrs">Spread my income over</label><span class="pill" id="agePill"></span></div>
+      <div class="years" id="yearsTxt"></div>
+      <input type="range" id="yrs" min="5" max="30" step="1" value="20">
+      <div class="scale"><span>5 yrs</span><span>30 yrs</span></div>
+      <div class="chips" id="yrChips"></div>
+    </div>
+  </aside>
+
+  <!-- ===== RESULTS ===== -->
+  <main class="col">
+    <section class="headline" aria-live="polite">
+      <div class="kicker" id="kicker"></div>
+      <div class="sentence" id="sentence"></div>
+      <div class="tiles">
+        <div class="tile"><small>Monthly payments</small><b id="tPay"></b></div>
+        <div class="tile"><small>Income period</small><b id="tPeriod"></b></div>
+        <div class="tile"><small>Portfolio left at end</small><b id="tLeft"></b></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="ctitle" id="chartTitle"></div>
+      <div class="csub">Monthly income at each assumed annual return</div>
+      <div class="chart" role="img" id="chartBox">
+        <div class="plot" id="plot"><div id="grid"></div><div class="bcols" id="bcols"></div></div>
+        <div class="xl" id="xl"></div>
+      </div>
+      <p class="sr" id="chartDesc"></p>
+    </section>
+
+    <section class="rcards" id="rcards"></section>
+
+    <section class="card">
+      <button class="mbtn" id="mBtn" aria-expanded="false" aria-controls="mBody">Show me the maths <span>+</span></button>
+      <div class="mbody" id="mBody" hidden>
+        <p>This estimator finds a single level monthly payment that uses up the whole portfolio by the end of the period, while the remaining balance keeps earning the assumed return.</p>
+        <div class="formula">PMT = (r × PV) ÷ [1 − (1 + r)^(−n)]</div>
+        <table class="worked" id="worked"></table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Important assumptions</h2>
+      <ul class="assume">
+        <li>A constant annual investment return.</li><li>Monthly return = annual return ÷ 12.</li>
+        <li>Monthly withdrawals stay level throughout.</li><li>Returns are smooth, with no ups and downs.</li>
+        <li>No investment volatility is modelled.</li><li>No sequence-of-returns risk is modelled.</li>
+        <li>No inflation adjustment.</li><li>No fees or taxes.</li>
+        <li>No extra top-ups or one-off withdrawals.</li><li>The portfolio is run down to about S$0 at the end.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<div class="insight"><b>1M65 Insight:</b> Plan your lifestyle on the lower return scenarios. Treat anything above that as a bonus, not a budget.</div>
+<footer>
+  <p>Educational illustration only. This estimator provides illustrative mathematical simulations for educational purposes only. It does not constitute financial, investment, retirement, tax, legal, or other professional advice.</p>
+  <p>The assumed returns of 6%, 8%, 10%, 12%, and 14% are hypothetical scenarios and are not forecasts, guarantees, or representations of future investment performance.</p>
+  <p>Actual investment returns fluctuate and may differ materially from these assumptions. Real-world outcomes may also be affected by market volatility, sequence-of-returns risk, fees, taxes, inflation, withdrawals, and other personal circumstances. Users should not rely on this calculator alone when making financial or investment decisions. © 1M65 Movement.</p>
+</footer>
+</div>
+
+<script>
+/* ===== SETTINGS ===== */
+const RATES = [0.06, 0.08, 0.10, 0.12, 0.14];            // the five assumed annual returns (edit here)
+const SHADES = ["#8a6a22", "#b8862a", "#d9a23a", "#f5c04a", "#ffd97a"];
+const PV_CHIPS = [100000, 200000, 300000, 400000, 500000, 750000, 1000000];
+const AGE_CHIPS = [55, 60, 62, 65, 70];
+const YEAR_CHIPS = [10, 15, 20, 25, 30];
+const MAX_PV = 1e12;
+
+/* ===== THE MATHS ===== */
+// PMT = (r x PV) / [1 - (1 + r)^-n]   with r = annual rate / 12 and n = years x 12
+function calculateMonthlyIncome(capital, annualRate, years) {
+  const r = annualRate / 12, n = years * 12;
+  if (!(capital > 0)) return 0;
+  return r === 0 ? capital / n : (r * capital) / (1 - Math.pow(1 + r, -n));
+}
+// Run the month-by-month balance: grow by r, then take the payment. Returns the balance left.
+function balanceAfter(capital, annualRate, years, payment) {
+  const r = annualRate / 12, n = years * 12;
+  let b = capital;
+  for (let i = 0; i < n; i++) b = b * (1 + r) - payment;
+  return b;
+}
+
+/* ===== FORMATTING ===== */
+const nf = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 0 });
+const formatCurrency = v => "S$" + nf.format(Math.round(v));
+function compact(v) {
+  if (v >= 1e6) return "S$" + parseFloat((v / 1e6).toFixed(1)) + "M";
+  if (v >= 1e3) return "S$" + parseFloat((v / 1e3).toFixed(1)) + "k";
+  return "S$" + Math.round(v);
+}
+const $ = id => document.getElementById(id);
+const pc = r => parseFloat((r * 100).toFixed(2));   // 0.14 -> 14 (avoids 14.000000000000002)
+function niceCeil(v) {                                    // round up to 1, 2, 2.5, 5 or 10 x 10^k
+  if (!(v > 0)) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p;
+  return p * ([1, 2, 2.5, 5, 10].find(x => f <= x + 1e-9) || 10);
+}
+
+/* ===== STATE ===== */
+const state = { pv: 1000000, pvError: "", age: 65, ageText: "65", years: 20 };
+
+/* ===== UPDATE EVERYTHING ===== */
+function update() {
+  const { pv, years } = state, valid = !state.pvError && pv > 0;
+  const ageOk = /^\d+$/.test(state.ageText) && +state.ageText >= 40 && +state.ageText <= 90;
+  const age = ageOk ? +state.ageText : null, end = ageOk ? age + years : null;
+  const range = ageOk ? `Age ${age} → ${end}` : "";
+  const inc = RATES.map(r => valid ? calculateMonthlyIncome(pv, r, years) : 0);
+
+  // inputs
+  $("pvErr").textContent = state.pvError;
+  $("moneyBox").classList.toggle("bad", !!state.pvError);
+  $("ageErr").textContent = ageOk ? "" : "Enter a whole age between 40 and 90.";
+  $("agePill").textContent = range; $("agePill").hidden = !ageOk;
+  $("yearsTxt").textContent = years + " years";
+  $("yrs").value = years; $("yrs").style.setProperty("--pct", ((years - 5) / 25 * 100) + "%");
+  $("yrs").setAttribute("aria-valuetext", years + " years");
+  document.querySelectorAll("#pvChips .chip").forEach(b => b.classList.toggle("on", valid && +b.dataset.v === pv));
+  document.querySelectorAll("#ageChips .chip").forEach(b => b.classList.toggle("on", ageOk && +b.dataset.v === age));
+  document.querySelectorAll("#yrChips .chip").forEach(b => b.classList.toggle("on", +b.dataset.v === years));
+
+  // headline
+  const amt = formatCurrency(pv);
+  if (valid) {
+    $("kicker").textContent = `${amt} · ${years} YEARS${ageOk ? " · AGE " + age + " → " + end : ""}`;
+    $("sentence").innerHTML = ageOk
+      ? `${amt} from age ${age} could pay you <em>${formatCurrency(inc[0])} – ${formatCurrency(inc[4])}</em> a month until age ${end}`
+      : `${amt} could pay you <em>${formatCurrency(inc[0])} – ${formatCurrency(inc[4])}</em> a month for ${years} years`;
+    $("tPay").textContent = years * 12; $("tPeriod").textContent = ageOk ? range : years + " years"; $("tLeft").textContent = "≈ S$0";
+  } else {
+    $("kicker").textContent = "YOUR PORTFOLIO";
+    $("sentence").textContent = "Type your portfolio value to see the estimates.";
+    $("tPay").textContent = "—"; $("tPeriod").textContent = "—"; $("tLeft").textContent = "—";
+  }
+
+  // chart (HTML + CSS bars, nothing is ever drawn over them)
+  $("chartTitle").innerHTML = valid ? `<em>${amt}</em> paid out monthly over <em>${years} years</em>${ageOk ? " · " + range.toLowerCase().replace("age", "age") : ""}` : "Monthly income at five assumed returns";
+  const max = Math.max(...inc), axis = niceCeil(max);
+  $("grid").innerHTML = [0, 1, 2, 3, 4].map(k => `<div class="gl" style="bottom:${k * 25}%"><span>${compact(axis * k / 4)}</span></div>`).join("");
+  $("bcols").innerHTML = RATES.map((r, i) => {
+    const h = valid ? inc[i] / axis * 100 : 0;
+    return `<div class="bcol"><div class="bval">${valid ? formatCurrency(inc[i]) : ""}</div><div class="bar" style="height:${h}%;background:linear-gradient(180deg,${SHADES[i]},${SHADES[i]}99)"></div></div>`;
+  }).join("");
+  $("xl").innerHTML = RATES.map((r, i) => `<div><b>${pc(r)}%</b><small>RETURN</small></div>`).join("");
+  $("chartDesc").textContent = valid ? "Monthly income: " + RATES.map((r, i) => `${pc(r)}% assumed return pays ${formatCurrency(inc[i])}`).join("; ") + "." : "No estimate yet.";
+  $("chartBox").setAttribute("aria-label", $("chartDesc").textContent);
+
+  // five return cards
+  $("rcards").innerHTML = RATES.map((r, i) => `<div class="rc"><div class="tag"><i style="background:${SHADES[i]}">${pc(r)}%</i>assumed return</div>
+    <div class="m">${valid ? formatCurrency(inc[i]) : "—"}</div><div class="pm">PER MONTH</div><hr>
+    <div class="r"><span>Per year</span><b>${valid ? formatCurrency(inc[i] * 12) : "—"}</b></div>
+    <div class="r"><span>Total over ${years} yrs</span><b>${valid ? formatCurrency(inc[i] * years * 12) : "—"}</b></div>
+    <div class="r"><span>Left at end</span><b>${valid ? "≈ S$0" : "—"}</b></div></div>`).join("");
+
+  // worked maths at the first (lowest) scenario
+  const r0 = RATES[0], left = valid ? Math.abs(balanceAfter(pv, r0, years, inc[0])) : 0, n = years * 12;
+  $("worked").innerHTML = `<tr><td>PV (portfolio value)</td><td>${valid ? amt : "—"}</td></tr>
+    <tr><td>r (monthly return, ${pc(r0)}% ÷ 12)</td><td>${(r0 / 12 * 100).toFixed(4)}%</td></tr>
+    <tr><td>n (number of payments)</td><td>${n}</td></tr>
+    <tr><td>PMT (monthly income)</td><td>${valid ? formatCurrency(inc[0]) : "—"}</td></tr>
+    <tr><td>Check: balance left after payment ${n}</td><td>${valid ? formatCurrency(left < 0.5 ? 0 : left) : "—"}</td></tr>`;
+}
+
+/* ===== CONTROLS ===== */
+function setPv(raw, caret) {
+  let err = "";
+  const s = String(raw).trim();
+  if (s.includes("-")) err = "The amount cannot be negative.";
+  else if (/[^0-9,\s]/.test(s)) err = "Use numbers only, for example 1,000,000.";
+  const digits = s.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  const val = digits ? Math.min(parseInt(digits, 10), Number.MAX_SAFE_INTEGER) : 0;
+  if (!err) {
+    if (!digits) err = "Type your portfolio value to see the estimates.";
+    else if (val === 0) err = "The amount must be more than S$0.";
+    else if (val > MAX_PV) err = "That amount is too large. Enter up to S$1,000,000,000,000.";
+  }
+  state.pv = val; state.pvError = err;
+  const el = $("pv"), formatted = digits ? nf.format(val) : "";
+  let pos = null;
+  if (caret != null) { let d = 0; for (let i = 0; i < caret; i++) if (/\d/.test(s[i] || "")) d++; pos = 0; let seen = 0; while (pos < formatted.length && seen < d) { if (/\d/.test(formatted[pos])) seen++; pos++; } }
+  el.value = formatted;
+  if (pos !== null && document.activeElement === el) el.setSelectionRange(pos, pos);
+  update();
+}
+PV_CHIPS.forEach(v => { const b = document.createElement("button"); b.className = "chip"; b.dataset.v = v; b.textContent = v >= 1e6 ? "S$" + v / 1e6 + "M" : "S$" + v / 1000 + "k"; b.onclick = () => setPv(String(v)); $("pvChips").appendChild(b); });
+AGE_CHIPS.forEach(v => { const b = document.createElement("button"); b.className = "chip"; b.dataset.v = v; b.textContent = v; b.onclick = () => { state.ageText = String(v); $("age").value = v; update(); }; $("ageChips").appendChild(b); });
+YEAR_CHIPS.forEach(v => { const b = document.createElement("button"); b.className = "chip"; b.dataset.v = v; b.textContent = v; b.onclick = () => { state.years = v; update(); }; $("yrChips").appendChild(b); });
+$("pv").addEventListener("input", e => setPv(e.target.value, e.target.selectionStart));
+$("age").addEventListener("input", e => { state.ageText = e.target.value.trim(); update(); });
+$("yrs").addEventListener("input", e => { state.years = +e.target.value; update(); });
+$("mBtn").addEventListener("click", () => { const open = $("mBody").hidden; $("mBody").hidden = !open; $("mBtn").setAttribute("aria-expanded", open); });
+$("moneyBox").addEventListener("click", () => $("pv").focus());
+$("age").value = "65";
+setPv("1000000");
+</script>
+</body>
+</html>
