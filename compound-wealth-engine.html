@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compound Wealth Engine · 1M65</title>
+<style>
+/* ============ LOOK AND FEEL ============ */
+:root{
+  --bg:#070707; --text:#f4f1ea; --muted:#8e887c;
+  --gold:#C8A04C; --gold2:#E8C877;
+  --card1:#151515; --card2:#0f0f0f; --border:#242424; --warm:#2b2618;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(ellipse 1000px 520px at 50% 0%,rgba(200,160,76,.16),transparent 70%),
+    radial-gradient(ellipse 800px 520px at 100% 100%,rgba(200,160,76,.05),transparent 70%),
+    var(--bg);
+  background-attachment:fixed;
+  color:var(--text); font-family:var(--sans);
+  min-height:100vh; overflow-x:hidden;
+  font-variant-numeric:tabular-nums;
+}
+.page{max-width:1300px;margin:0 auto;padding:28px 18px 40px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted)}
+.card{
+  background:linear-gradient(180deg,var(--card1),var(--card2));
+  border:1px solid var(--border); border-radius:18px; padding:20px;
+  min-width:0; position:relative;
+}
+.card.result{border-color:var(--warm)}
+.serif{font-family:var(--serif)}
+
+/* ---- header ---- */
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}
+.kicker{color:var(--gold);text-transform:uppercase;letter-spacing:.3em;font-size:12px}
+h1{font-family:var(--serif);font-weight:400;margin:6px 0 0;font-size:clamp(30px,5.2vw,54px);line-height:1.05}
+h1 em{color:var(--gold2);font-style:italic}
+.badge{
+  border:1px solid var(--gold); border-radius:999px; padding:9px 22px;
+  font-family:var(--serif); color:var(--gold2); font-size:18px; white-space:nowrap;
+}
+
+/* ---- five cards ---- */
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.money-box{display:flex;align-items:baseline;gap:6px;margin-top:12px;border-bottom:1px solid #333;transition:border-color .2s}
+.money-box:focus-within{border-color:var(--gold)}
+.money-box span{font-family:var(--serif);color:var(--gold);font-size:26px}
+.money-box input{
+  width:100%;min-width:0;background:none;border:0;outline:0;color:var(--text);
+  font-family:var(--serif);font-size:28px;padding:4px 0;font-variant-numeric:tabular-nums;
+}
+.big{font-family:var(--serif);font-size:clamp(22px,2.3vw,30px);margin-top:12px;word-break:break-all}
+.big.glow{color:var(--gold2);text-shadow:0 0 18px rgba(232,200,119,.45)}
+.sub{color:var(--muted);font-size:12px;margin-top:8px;min-height:16px;display:flex;align-items:center;gap:6px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
+
+/* ---- time meter ---- */
+.meter{
+  display:grid;grid-template-columns:auto auto 1fr;gap:26px;align-items:center;margin-bottom:14px;
+}
+.year-box .num{font-family:var(--serif);font-size:54px;color:var(--gold2);text-shadow:0 0 22px rgba(232,200,119,.5);line-height:1}
+.year-box .label{display:block;margin-bottom:4px}
+.play{
+  width:56px;height:56px;border-radius:50%;border:2px solid var(--gold);background:#2a2110;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  transition:transform .2s,box-shadow .2s;
+}
+.play:hover{transform:scale(1.1);box-shadow:0 0 22px rgba(200,160,76,.55)}
+.play svg{width:22px;height:22px;fill:var(--gold2)}
+.slider-wrap{min-width:0;padding-top:6px}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:5px;outline:0;margin:9px 0;cursor:pointer;
+  background:linear-gradient(90deg,#8a6a2a,var(--gold2)) 0/var(--pct,43%) 100% no-repeat,#2a2a2a;
+}
+input[type=range]::-webkit-slider-runnable-track{height:10px;background:transparent}
+input[type=range]::-moz-range-track{height:10px;background:transparent}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:28px;height:28px;border-radius:50%;margin-top:-9px;
+  background:radial-gradient(circle at 35% 30%,#fff3cf,var(--gold2) 45%,var(--gold));
+  border:4px solid #0b0b0b;box-shadow:0 0 16px rgba(232,200,119,.8);
+}
+input[type=range]::-moz-range-thumb{
+  width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff3cf,var(--gold2) 45%,var(--gold));
+  border:4px solid #0b0b0b;box-shadow:0 0 16px rgba(232,200,119,.8);
+}
+.ticks{position:relative;height:18px;font-size:12px;color:var(--muted)}
+.ticks span{position:absolute;top:0;transform:translateX(-50%)}
+
+/* ---- chart ---- */
+.chart-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+h2{font-family:var(--serif);font-weight:400;font-size:24px;margin:0}
+.canvas-wrap{position:relative}
+canvas{display:block;width:100%;height:520px;touch-action:pan-y;cursor:crosshair}
+.tip{
+  position:absolute;width:280px;pointer-events:none;z-index:5;display:none;
+  background:rgba(8,8,8,.93);border:1px solid #3a2f17;border-radius:14px;padding:14px 16px;
+  box-shadow:0 12px 36px rgba(0,0,0,.6);
+}
+.tip .name{font-weight:700;display:flex;align-items:center;gap:8px;font-size:14px}
+.tip .yr{color:var(--gold);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:6px 0 10px}
+.tip .row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:#cfcabd}
+.tip .row b{font-weight:400;color:var(--text)}
+.tip .row.g b{color:var(--gold2)}
+.tip hr{border:0;border-top:1px solid #2a2a2a;margin:8px 0}
+.tip .fin{font-family:var(--serif);font-size:26px;margin:2px 0 10px}
+.tip .bar{height:6px;border-radius:3px;background:#555;overflow:hidden;display:flex}
+.tip .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.tip .bar u{display:block;height:100%;background:#6b6b6b}
+.tip .pc{font-size:12px;color:var(--muted);margin-top:8px}
+.tip .pc b{color:var(--gold2);font-weight:600}
+
+/* ---- asset buttons ---- */
+.assets{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:16px 0 4px}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;
+  background:#121212;border:1px solid #2c2c2c;color:var(--text);font:inherit;font-size:13px;cursor:pointer;
+  transition:all .2s;
+}
+.chip:hover{border-color:#4a4a4a;transform:translateY(-1px)}
+.chip .dot{box-shadow:0 0 8px currentColor;background:currentColor}
+.chip b{font-weight:700}
+.chip .r{color:var(--muted);transition:color .2s}
+.chip.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,#101010);box-shadow:0 0 16px color-mix(in srgb,var(--c) 40%,transparent)}
+.chip.on .r{color:var(--c)}
+.chip.clear{border:1px dashed #555;color:#aaa;background:transparent}
+.chip.clear.active{border:1px solid var(--gold);color:var(--gold2);background:#221a09}
+
+/* ---- maths ---- */
+.maths-btn-wrap{text-align:center;margin:20px 0 6px}
+.maths-btn{
+  background:#221a09;border:1px solid var(--gold);color:var(--gold2);border-radius:999px;
+  padding:12px 28px;text-transform:uppercase;letter-spacing:.22em;font-size:12px;cursor:pointer;
+  transition:box-shadow .2s;font-family:var(--sans)
+}
+.maths-btn:hover{box-shadow:0 0 22px rgba(200,160,76,.5)}
+.maths-btn .arr{display:inline-block;margin-left:8px;transition:transform .25s}
+.maths-btn.open .arr{transform:rotate(180deg)}
+#maths{display:none;margin-top:16px}
+#maths.open{display:block;animation:rise .35s ease}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.empty{text-align:center;color:var(--muted);padding:26px 8px}
+.empty b{color:var(--gold);font-weight:400}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tab{
+  display:inline-flex;align-items:center;gap:7px;background:#121212;border:1px solid #2c2c2c;color:var(--text);
+  border-radius:999px;padding:6px 13px;font:inherit;font-size:12px;cursor:pointer
+}
+.tab.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,#101010)}
+.formulas{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.fbox{background:rgba(200,160,76,.06);border:1px solid #3a2f17;border-radius:14px;padding:16px;min-width:0}
+.fbox .eq{font-family:var(--serif);font-size:clamp(15px,1.8vw,21px);margin:10px 0;word-break:break-word}
+.fbox .eq em{color:var(--gold2);font-style:normal}
+.fbox .note{color:var(--muted);font-size:13px;line-height:1.5}
+.tbl-box{max-height:460px;overflow:auto;border:1px solid var(--border);border-radius:14px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:960px;font-size:13px}
+th{
+  position:sticky;top:0;background:#171717;z-index:2;text-align:right;padding:11px 12px;
+  color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:500;
+  border-bottom:1px solid #2c2c2c;white-space:nowrap
+}
+td{padding:9px 12px;text-align:right;border-bottom:1px solid #1a1a1a;white-space:nowrap}
+th:first-child,td:first-child,th:last-child,td:last-child{text-align:left}
+tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+td.gr{color:var(--gold2)}
+td.cl{font-weight:700;color:#fff}
+tr.later{opacity:.38}
+tr.cur{background:rgba(200,160,76,.16)!important}
+tr.cur td:first-child{box-shadow:inset 3px 0 0 var(--gold2);color:var(--gold2);font-weight:700}
+tr.mile td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+tr.cur.mile td:first-child{box-shadow:inset 3px 0 0 var(--gold2)}
+.pill{display:inline-block;background:#2a2110;border:1px solid #5a4620;color:var(--gold2);border-radius:999px;padding:2px 10px;font-size:11px;margin-right:6px}
+.dim{color:var(--muted)}
+
+footer{text-align:center;color:#6f6a60;font-size:12px;line-height:1.7;margin-top:32px}
+footer b{color:var(--gold);font-weight:500}
+
+/* ---- responsive ---- */
+@media (max-width:1100px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:760px){
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .formulas{grid-template-columns:1fr}
+}
+@media (max-width:600px){
+  .cards{grid-template-columns:1fr}
+  header{flex-direction:column;align-items:flex-start}
+  .meter{grid-template-columns:1fr auto;gap:14px}
+  .slider-wrap{grid-column:1 / -1}
+  canvas{height:380px}
+  .hint{display:none}
+  .year-box .num{font-size:46px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div>
+      <div class="kicker">The power of time</div>
+      <h1>Compound <em>Wealth</em> Engine</h1>
+    </div>
+    <div class="badge" id="badge"></div>
+  </header>
+
+  <section class="cards">
+    <div class="card">
+      <div class="label">Starting amount</div>
+      <div class="money-box"><span>$</span><input id="inStart" inputmode="numeric" autocomplete="off" aria-label="Starting amount"></div>
+    </div>
+    <div class="card">
+      <div class="label">Yearly addition</div>
+      <div class="money-box"><span>$</span><input id="inAdd" inputmode="numeric" autocomplete="off" aria-label="Yearly addition"></div>
+    </div>
+    <div class="card result">
+      <div class="label">Money you put in</div>
+      <div class="big" id="cPut"></div>
+      <div class="sub" id="cPutSub"></div>
+    </div>
+    <div class="card result">
+      <div class="label">Compound growth</div>
+      <div class="big glow" id="cGrow"></div>
+      <div class="sub" id="cGrowSub"></div>
+    </div>
+    <div class="card result">
+      <div class="label">Final value</div>
+      <div class="big" id="cFinal"></div>
+      <div class="sub"><span class="dot" id="cDot"></span><span id="cName"></span></div>
+    </div>
+  </section>
+
+  <section class="card meter">
+    <div class="year-box"><span class="label">Year</span><span class="num" id="yearNum">30</span></div>
+    <button class="play" id="playBtn" aria-label="Play"></button>
+    <div class="slider-wrap">
+      <input type="range" id="slider" min="0" max="70" step="1" value="30" aria-label="Year">
+      <div class="ticks" id="ticks"></div>
+    </div>
+  </section>
+
+  <section class="card" id="chartCard">
+    <div class="chart-head"><h2 id="chartTitle">Growth over time</h2><span class="label hint">Hover any line</span></div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="chart"></canvas>
+    </div>
+    <div class="tip" id="tip"></div>
+
+    <div class="assets" id="assets"><span class="label" style="margin-right:4px">Superimpose</span></div>
+  </section>
+
+  <div class="maths-btn-wrap">
+    <button class="maths-btn" id="mathsBtn"><span id="mathsTxt">Show the maths</span><span class="arr">▾</span></button>
+  </div>
+  <section class="card" id="maths"></section>
+
+  <footer>
+    For education only. Each line assumes the same return every year; real markets rise and fall. The yearly addition is made at the start of each year, from Year 1. Not financial advice.<br>
+    <span id="footLine"></span>
+  </footer>
+</div>
+
+<script>
+/* =====================================================================
+   1. SETTINGS  — change names, rates and colours here
+   ===================================================================== */
+const SETTINGS = {
+  badge: "1M65",                       // text in the header badge and browser tab
+  footerBrand: "1M65",                 // gold part of the footer line
+  footerRest: " · One Million by 65",  // rest of the footer line
+  maxYear: 70,                         // last year calculated
+  startYear: 30,                       // year shown when the page opens
+  defaultStart: 10000,                 // default starting amount
+  defaultAdd: 10000,                   // default yearly addition
+  playSeconds: 8,                      // how long Play takes to reach Year 70
+  maxInput: 10000000000                // largest number the boxes accept (10 billion)
+};
+
+// The "textbook" lines shown by default (rate in % a year)
+const TEXTBOOK_RATES = [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
+
+// The asset buttons. To rename, re-rate or recolour an asset, edit its row here.
+const ASSETS = [
+  { id: "fd",   name: "Fixed Deposit",           rate: 1,   color: "#cbd5e1" },
+  { id: "mmf",  name: "Money Market Fund",       rate: 1.5, color: "#38bdf8" },
+  { id: "cpfoa",name: "CPF OA",                  rate: 2.5, color: "#34d399" },
+  { id: "cpfsa",name: "CPF SA / MA / RA",        rate: 4,   color: "#b8f35a" },
+  { id: "spn",  name: "S&P 500 (Normal)",        rate: 10,  color: "#ffd166" },
+  { id: "spc",  name: "S&P 500 (Crash Buying)",  rate: 14,  color: "#ff8a3d" },
+  { id: "nqn",  name: "Nasdaq-100 (Normal)",     rate: 15,  color: "#f472b6" },
+  { id: "nqc",  name: "Nasdaq-100 (Crash Buying)",rate: 17, color: "#c084fc" }
+];
+
+/* =====================================================================
+   2. THE MATHS  — the compound-interest calculation
+   ===================================================================== */
+// Everything that changes while the page is used lives in "state".
+const state = {
+  start: SETTINGS.defaultStart,
+  add: SETTINGS.defaultAdd,
+  year: SETTINGS.startYear,   // can be a decimal while Play runs
+  playing: false,
+  playFrom: 0, playStartTime: 0,
+  selected: [],               // ids of selected assets, in click order
+  lastClicked: null,
+  activeTab: null,
+  mathsOpen: false,
+  hover: null                 // {line, year, px, py} or null
+};
+
+// Work out every whole year from 0 to 70 for one rate (rate is a fraction, e.g. 0.10).
+function buildSeries(rate) {
+  const n = SETTINGS.maxYear;
+  const opening = [], added = [], growth = [], closing = [], put = [];
+  closing[0] = state.start;           // Year 0 balance = starting amount
+  added[0] = state.start; growth[0] = 0; opening[0] = null;
+  put[0] = state.start;
+  for (let y = 1; y <= n; y++) {
+    opening[y] = closing[y - 1];
+    added[y] = state.add;                                   // goes in at the START of the year
+    closing[y] = (opening[y] + state.add) * (1 + rate);     // then the whole balance grows
+    growth[y] = closing[y] - opening[y] - state.add;
+    put[y] = state.start + y * state.add;                   // money put in by year y
+  }
+  return { opening, added, growth, closing, put };
+}
+
+// Blend straight-line between the two neighbouring whole years.
+function blend(arr, year) {
+  const lo = Math.floor(year), hi = Math.min(lo + 1, SETTINGS.maxYear), f = year - lo;
+  return arr[lo] * (1 - f) + arr[hi] * f;
+}
+const putAt = (year) => state.start + year * state.add;
+
+/* =====================================================================
+   3. LINES  — the things drawn on the chart
+   ===================================================================== */
+const TEXT_LINES = TEXTBOOK_RATES.map((r, i) => {
+  // Spread the hue evenly: blue (205) -> gold (44) in the middle -> red (0)
+  const mid = (TEXTBOOK_RATES.length - 1) / 2;
+  const hue = i <= mid ? 205 + (44 - 205) * (i / mid) : 44 + (0 - 44) * ((i - mid) / mid);
+  return { key: "t" + r, name: r + "% a year", rate: r, color: `hsl(${hue.toFixed(1)},80%,62%)`, width: 1.7, isAsset: false };
+});
+const ASSET_LINES = {};
+ASSETS.forEach(a => {
+  ASSET_LINES[a.id] = { key: a.id, id: a.id, name: a.name + " · " + a.rate + "%", short: a.name, rate: a.rate, color: a.color, width: 4, isAsset: true };
+});
+const ALL_LINES = TEXT_LINES.concat(Object.values(ASSET_LINES));
+
+function recalcAll() { ALL_LINES.forEach(l => { l.series = buildSeries(l.rate / 100); }); }
+
+// Which lines are visible right now?
+function visibleLines() {
+  return state.selected.length ? state.selected.map(id => ASSET_LINES[id]) : TEXT_LINES;
+}
+
+/* =====================================================================
+   4. FORMATTING  — turning numbers into text
+   ===================================================================== */
+const fmtFull = (v) => "$" + Math.round(v).toLocaleString("en-US");
+function fmtShort(v) {                      // $500K, $1.5M, $20.9B
+  const a = Math.abs(v);
+  const units = [[1e12, "T"], [1e9, "B"], [1e6, "M"], [1e3, "K"]];
+  for (const [size, s] of units) if (a >= size) return "$" + parseFloat((v / size).toFixed(2)) + s;
+  return "$" + parseFloat(v.toFixed(2));
+}
+const fmtRate = (r) => parseFloat(r.toFixed(2)) + "%";
+function fmtMult(m) { return m < 100 ? m.toFixed(1) : Math.round(m).toLocaleString("en-US"); }
+
+/* =====================================================================
+   5. CHART  — drawn by hand on a canvas
+   ===================================================================== */
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+const M = { l: 70, r: 20, t: 18, b: 34 };       // margins around the plot
+let W = 0, H = 0, dpr = 1;
+let axisMax = 1;                                // current (gliding) top of the vertical axis
+
+function resizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  W = canvas.clientWidth; H = canvas.clientHeight;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  dirty = true;
+}
+const xOf = (year) => M.l + (year / SETTINGS.maxYear) * (W - M.l - M.r);
+const yOf = (v) => M.t + (1 - v / axisMax) * (H - M.t - M.b);
+
+function targetAxisMax() {
+  let top = 0;
+  visibleLines().forEach(l => { top = Math.max(top, blend(l.series.closing, state.year)); });
+  top = Math.max(top, putAt(state.year));
+  return Math.max(top * 1.08, 1);
+}
+function niceStep(raw) {                         // 1, 2, 5 or 10 x a power of ten
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 5, 10]) if (m * p >= raw) return m * p;
+  return 10 * p;
+}
+// Path of a line from Year 0 up to the selected year
+function tracePath(arr, upTo) {
+  ctx.moveTo(xOf(0), yOf(arr[0]));
+  for (let y = 1; y <= Math.floor(upTo); y++) ctx.lineTo(xOf(y), yOf(arr[y]));
+  if (upTo > Math.floor(upTo)) ctx.lineTo(xOf(upTo), yOf(blend(arr, upTo)));
+}
+function strokeLine(arr, color, width, alpha, glow) {
+  ctx.save();
+  ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = width;
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.shadowColor = color; ctx.shadowBlur = glow;
+  ctx.beginPath(); tracePath(arr, state.year); ctx.stroke();
+  ctx.restore();
+}
+function dotAt(x, y, r, color, alpha) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+
+function drawChart() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const plotR = W - M.r, plotB = H - M.b;
+  ctx.font = "12px system-ui, sans-serif";
+
+  // Horizontal gridlines + dollar labels
+  const step = niceStep(axisMax / 5);
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = 0; v <= axisMax; v += step) {
+    const y = yOf(v);
+    ctx.strokeStyle = "rgba(255,255,255,.07)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(M.l, y); ctx.lineTo(plotR, y); ctx.stroke();
+    ctx.fillStyle = "#8e887c"; ctx.fillText(fmtShort(v), M.l - 10, y);
+  }
+  // Vertical gridlines + year labels
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let yr = 0; yr <= SETTINGS.maxYear; yr += 10) {
+    const x = xOf(yr);
+    ctx.strokeStyle = "rgba(255,255,255,.035)";
+    ctx.beginPath(); ctx.moveTo(x, M.t); ctx.lineTo(x, plotB); ctx.stroke();
+    ctx.fillStyle = "#8e887c"; ctx.fillText("Yr " + yr, x, plotB + 10);
+  }
+
+  const lines = visibleLines();
+  const sx = xOf(state.year);
+
+  // Faint gold tint to the right of the selected year
+  const g = ctx.createLinearGradient(sx, 0, plotR, 0);
+  g.addColorStop(0, "rgba(200,160,76,.10)"); g.addColorStop(1, "rgba(200,160,76,0)");
+  ctx.fillStyle = g; ctx.fillRect(sx, M.t, Math.max(0, plotR - sx), plotB - M.t);
+
+  const money = ALL_LINES[0].series.put;
+
+  // Light shading under the "money put in" line
+  ctx.save();
+  ctx.beginPath(); tracePath(money, state.year);
+  ctx.lineTo(sx, plotB); ctx.lineTo(xOf(0), plotB); ctx.closePath();
+  ctx.fillStyle = "rgba(244,241,234,.045)"; ctx.fill(); ctx.restore();
+
+  // One asset only: shade the gap (the compounding) between its line and the money line
+  if (state.selected.length === 1) {
+    const L = lines[0];
+    ctx.save();
+    ctx.beginPath(); tracePath(L.series.closing, state.year);
+    const endY = yOf(blend(money, state.year));
+    ctx.lineTo(sx, endY);
+    for (let y = Math.floor(state.year); y >= 0; y--) ctx.lineTo(xOf(y), yOf(money[y]));
+    ctx.closePath();
+    const gg = ctx.createLinearGradient(0, M.t, 0, plotB);
+    gg.addColorStop(0, hexA(L.color, .42)); gg.addColorStop(1, hexA(L.color, .02));
+    ctx.fillStyle = gg; ctx.fill(); ctx.restore();
+  }
+
+  // Draw lines (hovered one last, so it sits on top)
+  const hv = state.hover ? state.hover.line : null;
+  const alphaOf = (l) => !hv ? (l.isAsset ? 1 : .9) : (l === hv ? 1 : (l.isAsset ? .4 : .16));
+  lines.forEach(l => { if (l !== hv) strokeLine(l.series.closing, l.color, l.width, alphaOf(l), l.isAsset ? 14 : 4); });
+  if (hv) strokeLine(hv.series.closing, hv.color, hv.width + 2.2, 1, 20);
+
+  // Dashed "Money you put in"
+  ctx.save();
+  ctx.strokeStyle = "rgba(244,241,234,.85)"; ctx.lineWidth = 1.8; ctx.setLineDash([7, 6]);
+  ctx.beginPath(); tracePath(money, state.year); ctx.stroke(); ctx.restore();
+
+  // Selected-year marker line and dots
+  ctx.save();
+  ctx.strokeStyle = "#E8C877"; ctx.lineWidth = 1.6; ctx.shadowColor = "#E8C877"; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.moveTo(sx, M.t); ctx.lineTo(sx, plotB); ctx.stroke(); ctx.restore();
+  lines.forEach(l => dotAt(sx, yOf(blend(l.series.closing, state.year)), l.isAsset ? 6 : 3.5, l.color, alphaOf(l)));
+
+  // Hover guide and ring
+  if (state.hover) {
+    const hx = xOf(state.hover.year);
+    ctx.save();
+    ctx.strokeStyle = "rgba(244,241,234,.4)"; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+    ctx.beginPath(); ctx.moveTo(hx, M.t); ctx.lineTo(hx, plotB); ctx.stroke(); ctx.restore();
+    const hy = yOf(hv.series.closing[state.hover.year]);
+    ctx.save();
+    ctx.fillStyle = "#0a0a0a"; ctx.strokeStyle = hv.color; ctx.lineWidth = 2.5;
+    ctx.shadowColor = hv.color; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(hx, hy, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+}
+// Turn "#rrggbb" into an rgba() string
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+/* =====================================================================
+   6. HOVER  — find the closest line and show the floating card
+   ===================================================================== */
+const tip = document.getElementById("tip");
+const chartCard = document.getElementById("chartCard");
+
+function onPointer(e) {
+  if (state.playing) { clearHover(); return; }
+  const r = canvas.getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  if (px < M.l - 5 || px > W - M.r + 5 || py < 0 || py > H) { clearHover(); return; }
+  // whole year under the pointer, never beyond the selected year
+  let yr = Math.round(((px - M.l) / (W - M.l - M.r)) * SETTINGS.maxYear);
+  yr = Math.max(0, Math.min(yr, Math.floor(state.year)));
+  // closest visible line to the pointer at that year
+  let best = null, bestD = Infinity;
+  visibleLines().forEach(l => {
+    const d = Math.abs(yOf(l.series.closing[yr]) - py);
+    if (d < bestD) { bestD = d; best = l; }
+  });
+  state.hover = { line: best, year: yr };
+  showTip(e, best, yr);
+  dirty = true;
+}
+function clearHover() {
+  if (state.hover) { state.hover = null; tip.style.display = "none"; dirty = true; }
+}
+function showTip(e, line, yr) {
+  const put = line.series.put[yr], fin = line.series.closing[yr], gr = fin - put;
+  const gp = fin > 0 ? Math.max(0, gr / fin * 100) : 0;
+  tip.innerHTML =
+    `<div class="name"><span class="dot" style="background:${line.color};box-shadow:0 0 8px ${line.color}"></span>${line.name}</div>
+     <div class="yr">Year ${yr}</div>
+     <div class="row"><span>Money put in</span><b>${fmtFull(put)}</b></div>
+     <div class="row g"><span>Compound growth</span><b>${fmtFull(gr)}</b></div>
+     <hr>
+     <div class="label">Final value</div>
+     <div class="fin">${fmtFull(fin)}</div>
+     <div class="bar"><u style="width:${100 - gp}%"></u><i style="width:${gp}%"></i></div>
+     <div class="pc"><b>${gp.toFixed(1)}%</b> of this wealth came from compounding</div>`;
+  tip.style.display = "block";
+  const cr = chartCard.getBoundingClientRect();
+  const x = e.clientX - cr.left, y = e.clientY - cr.top;
+  const tw = 280, th = tip.offsetHeight;
+  let left = x + 18;
+  if (left + tw > cr.width - 8) left = x - 18 - tw;
+  left = Math.max(8, left);
+  const top = Math.max(8, Math.min(y - th / 2, cr.height - th - 8));
+  tip.style.left = left + "px"; tip.style.top = top + "px";
+}
+canvas.addEventListener("pointermove", onPointer);
+canvas.addEventListener("pointerdown", onPointer);
+canvas.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") clearHover(); });
+
+/* =====================================================================
+   7. TOP CARDS  — inputs and result cards
+   ===================================================================== */
+const el = (id) => document.getElementById(id);
+function setText(node, txt) { if (node.textContent !== txt) node.textContent = txt; }
+
+// Which line do the three result cards describe?
+function focusInfo() {
+  if (state.hover) return { line: state.hover.line, year: state.hover.year };
+  let line = null;
+  if (state.selected.length) {
+    if (state.mathsOpen && state.activeTab) line = ASSET_LINES[state.activeTab];
+    else if (state.lastClicked && state.selected.includes(state.lastClicked)) line = ASSET_LINES[state.lastClicked];
+    else line = ASSET_LINES[state.activeTab];
+  }
+  if (!line) line = TEXT_LINES[TEXT_LINES.length - 1];   // the 20% line
+  return { line, year: state.year };
+}
+
+function updateCards() {
+  const f = focusInfo(), y = f.year;
+  const fin = blend(f.line.series.closing, y), put = putAt(y), gr = fin - put;
+  const n = Math.round(y);
+  setText(el("cPut"), fmtFull(put));
+  setText(el("cPutSub"), n === 0 ? "Starting amount only" : `${fmtShort(state.start)} + ${n} × ${fmtShort(state.add)}`);
+  setText(el("cGrow"), fmtFull(gr));
+  setText(el("cGrowSub"), `${fin > 0 ? (gr / fin * 100).toFixed(1).replace(/\.0$/, "") : "0"}% of the final value`);
+  setText(el("cFinal"), fmtFull(fin));
+  el("cDot").style.background = f.line.color; el("cDot").style.boxShadow = `0 0 8px ${f.line.color}`;
+  setText(el("cName"), `${f.line.name} · ${put > 0 ? fmtMult(fin / put) + "×" : "–"}`);
+}
+
+function parseBox(txt) {
+  const digits = txt.replace(/[^0-9]/g, "");
+  return Math.min(digits === "" ? 0 : parseInt(digits, 10), SETTINGS.maxInput);
+}
+function wireInput(id, key) {
+  const box = el(id);
+  box.value = state[key].toLocaleString("en-US");
+  box.addEventListener("focus", () => box.select());
+  box.addEventListener("click", () => box.select());
+  box.addEventListener("input", () => {
+    const v = parseBox(box.value);
+    box.value = v === 0 && box.value === "" ? "" : String(v);   // digits only while typing
+    state[key] = v; recalcAll(); buildMaths(); dirty = true;
+  });
+  box.addEventListener("blur", () => { box.value = state[key].toLocaleString("en-US"); });
+}
+
+/* =====================================================================
+   8. SHOW THE MATHS  — year-by-year table
+   ===================================================================== */
+const mathsEl = el("maths");
+let tableRows = [], lastHiYear = -1;
+
+function buildMaths() {
+  if (!state.selected.length) {
+    mathsEl.innerHTML = `<div class="empty">Click an asset under <b>Superimpose</b> to see its year-by-year maths.</div>`;
+    tableRows = []; return;
+  }
+  const line = ASSET_LINES[state.activeTab], S = line.series, rate = line.rate / 100;
+  const mult = (rate * 100) % 1 !== 0 ? (1 + rate).toFixed(3) : (1 + rate).toFixed(2);
+  const pct = fmtRate(line.rate);
+
+  let tabs = "";
+  if (state.selected.length > 1) {
+    tabs = `<div class="tabs">` + state.selected.map(id => {
+      const a = ASSET_LINES[id];
+      return `<button class="tab ${id === state.activeTab ? "on" : ""}" data-id="${id}" style="--c:${a.color}"><span class="dot" style="background:${a.color}"></span>${a.name}</button>`;
+    }).join("") + `</div>`;
+  }
+
+  const formulas = `<div class="formulas">
+    <div class="fbox"><div class="label">The rule, every year</div>
+      <div class="eq">Closing = (Opening + <em>${fmtFull(state.add)}</em>) × <em>${mult}</em></div>
+      <div class="note">At the start of each year the yearly addition goes in. Then the whole balance grows by ${pct}. The closing balance becomes next year's opening balance.</div></div>
+    <div class="fbox"><div class="label">Year 1, worked out</div>
+      <div class="eq">(${fmtFull(state.start)} + ${fmtFull(state.add)}) × ${mult} = <em>${fmtFull(S.closing[1])}</em></div>
+      <div class="note">Money put in: ${fmtFull(S.put[1])}. Growth earned in Year 1: ${fmtFull(S.growth[1])}.</div></div>
+  </div>`;
+
+  // Milestones: shown only in the first year each one happens
+  let m1 = -1, m2 = -1, m3 = -1;
+  for (let y = 1; y <= SETTINGS.maxYear; y++) {
+    if (m1 < 0 && state.add > 0 && S.growth[y] > state.add) m1 = y;
+    if (m2 < 0 && state.start < 1e6 && S.closing[y] >= 1e6) m2 = y;
+    if (m3 < 0 && S.closing[y] - S.put[y] > S.put[y]) m3 = y;
+  }
+  let rows = "";
+  for (let y = 0; y <= SETTINGS.maxYear; y++) {
+    let ms = "", mile = false;
+    if (y === 0) ms = `<span class="dim">Starting amount</span>`;
+    const tag = (t) => { mile = true; return `<span class="pill">${t}</span>`; };
+    if (y === m1) ms += tag("Growth beats your yearly addition");
+    if (y === m2) ms += tag("First $1 million");
+    if (y === m3) ms += tag("Growth exceeds all money put in");
+    rows += `<tr data-y="${y}" class="${mile ? "mile" : ""}">
+      <td>${y}</td>
+      <td>${y === 0 ? "–" : fmtFull(S.opening[y])}</td>
+      <td>${fmtFull(S.added[y])}</td>
+      <td class="gr">${y === 0 ? "–" : fmtFull(S.growth[y])}</td>
+      <td class="cl">${fmtFull(S.closing[y])}</td>
+      <td>${fmtFull(S.put[y])}</td>
+      <td class="gr">${fmtFull(S.closing[y] - S.put[y])}</td>
+      <td>${ms}</td></tr>`;
+  }
+  mathsEl.innerHTML = tabs + formulas + `<div class="tbl-box" id="tblBox"><table>
+    <thead><tr><th>Year</th><th>Opening balance</th><th>Added (start of year)</th><th>Growth this year</th><th>Closing balance</th><th>Total put in</th><th>Total growth</th><th>Milestone</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+  tableRows = Array.from(mathsEl.querySelectorAll("tbody tr"));
+  lastHiYear = -1;
+  mathsEl.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { state.activeTab = b.dataset.id; buildMaths(); dirty = true; }));
+}
+
+// Highlight the row for the selected year and keep it centred in the box
+function updateTableHighlight() {
+  if (!state.mathsOpen || !tableRows.length) return;
+  const yr = Math.round(state.year);
+  if (yr === lastHiYear) return;
+  lastHiYear = yr;
+  tableRows.forEach((tr, i) => {
+    tr.classList.toggle("cur", i === yr);
+    tr.classList.toggle("later", i > yr);
+  });
+  const box = el("tblBox"), row = tableRows[yr];
+  if (box && row) box.scrollTop = row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2;
+}
+
+el("mathsBtn").addEventListener("click", () => {
+  state.mathsOpen = !state.mathsOpen;
+  mathsEl.classList.toggle("open", state.mathsOpen);
+  el("mathsBtn").classList.toggle("open", state.mathsOpen);
+  el("mathsTxt").textContent = state.mathsOpen ? "Hide the maths" : "Show the maths";
+  lastHiYear = -1; dirty = true;
+});
+
+/* =====================================================================
+   9. CONTROLS  — slider, play button, asset buttons, keyboard
+   ===================================================================== */
+const slider = el("slider"), playBtn = el("playBtn");
+const ICON_PLAY = `<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>`;
+const ICON_PAUSE = `<svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg>`;
+playBtn.innerHTML = ICON_PLAY;
+
+[0, 10, 20, 30, 40, 50, 60, 70].forEach(t => {
+  const s = document.createElement("span");
+  s.textContent = t; s.style.left = `calc(14px + (100% - 28px) * ${t / 70})`;
+  el("ticks").appendChild(s);
+});
+
+function setPlaying(on) {
+  state.playing = on;
+  playBtn.innerHTML = on ? ICON_PAUSE : ICON_PLAY;
+  playBtn.setAttribute("aria-label", on ? "Pause" : "Play");
+  if (on) {
+    clearHover();
+    if (state.year >= SETTINGS.maxYear) state.year = 0;     // restart from 0 if at the end
+    state.playFrom = state.year; state.playStartTime = performance.now();
+  }
+  dirty = true;
+}
+playBtn.addEventListener("click", () => setPlaying(!state.playing));
+slider.addEventListener("input", () => {
+  if (state.playing) setPlaying(false);
+  state.year = parseInt(slider.value, 10); dirty = true;
+});
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "Space") return;
+  const t = e.target, tag = t.tagName;
+  if (tag === "BUTTON" || (tag === "INPUT" && t.type !== "range")) return;
+  e.preventDefault(); setPlaying(!state.playing);
+});
+
+// Asset buttons
+const assetsEl = el("assets");
+ASSETS.forEach(a => {
+  const b = document.createElement("button");
+  b.className = "chip"; b.dataset.id = a.id; b.style.setProperty("--c", a.color);
+  b.innerHTML = `<span class="dot" style="color:${a.color}"></span><b>${a.name}</b><span class="r">${fmtRate(a.rate)}</span>`;
+  b.addEventListener("click", () => toggleAsset(a.id));
+  assetsEl.appendChild(b);
+});
+const clearBtn = document.createElement("button");
+clearBtn.className = "chip clear"; clearBtn.textContent = "Clear";
+clearBtn.addEventListener("click", () => { state.selected = []; state.activeTab = null; state.lastClicked = null; afterSelection(); });
+assetsEl.appendChild(clearBtn);
+
+function toggleAsset(id) {
+  const i = state.selected.indexOf(id);
+  if (i >= 0) {
+    state.selected.splice(i, 1);
+    if (state.activeTab === id) state.activeTab = state.selected[state.selected.length - 1] || null;
+  } else {
+    state.selected.push(id); state.activeTab = id;     // newest asset opens by default
+  }
+  state.lastClicked = id;
+  afterSelection();
+}
+function afterSelection() {
+  clearHover();
+  assetsEl.querySelectorAll(".chip[data-id]").forEach(b => b.classList.toggle("on", state.selected.includes(b.dataset.id)));
+  const any = state.selected.length > 0;
+  clearBtn.classList.toggle("active", any);
+  clearBtn.textContent = any ? "Clear · show all rates" : "Clear";
+  el("chartTitle").textContent = any ? "Your selection vs money put in" : "Growth over time";
+  buildMaths(); dirty = true;
+}
+
+/* =====================================================================
+   10. ANIMATION LOOP  — one loop, redraws only when something changed
+   ===================================================================== */
+let dirty = true, lastT = performance.now();
+function loop(now) {
+  const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+
+  if (state.playing) {                                       // move the year forward
+    const t = (now - state.playStartTime) / (SETTINGS.playSeconds * 1000);
+    state.year = state.playFrom + (SETTINGS.maxYear - state.playFrom) * Math.min(1, t);
+    if (t >= 1) { state.year = SETTINGS.maxYear; setPlaying(false); }
+    dirty = true;
+  }
+  const target = targetAxisMax();                            // glide the vertical axis
+  if (Math.abs(target - axisMax) > target * 0.0005) {
+    axisMax += (target - axisMax) * (1 - Math.exp(-dt * 12)); dirty = true;
+  } else if (axisMax !== target) { axisMax = target; dirty = true; }
+
+  if (dirty) {
+    dirty = false;
+    const yr = Math.round(state.year);
+    setText(el("yearNum"), String(yr));
+    slider.value = yr;
+    slider.style.setProperty("--pct", (state.year / SETTINGS.maxYear * 100) + "%");
+    updateCards(); drawChart(); updateTableHighlight();
+  }
+  requestAnimationFrame(loop);
+}
+
+/* =====================================================================
+   START
+   ===================================================================== */
+document.title = "Compound Wealth Engine · " + SETTINGS.badge;
+el("badge").textContent = SETTINGS.badge;
+el("footLine").innerHTML = `<b>${SETTINGS.footerBrand}</b>${SETTINGS.footerRest}`;
+wireInput("inStart", "start");
+wireInput("inAdd", "add");
+recalcAll();
+resizeCanvas();
+axisMax = targetAxisMax();
+buildMaths();
+new ResizeObserver(resizeCanvas).observe(canvas);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
