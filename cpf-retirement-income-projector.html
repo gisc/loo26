@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPF Retirement Income Projector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050508; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.1);
+  --text:#f2f3f8; --text2:#b1b6c8; --muted:#818799;
+  --oa:#4F8EF7; --sa:#C47F14; --ma:#1FA88F; --ra:#9B63F0; --life:#E0507A; --amber:#f0b429;
+  --grad:linear-gradient(90deg,#4F8EF7,#9B63F0,#E0507A);
+  --head:"Space Grotesk","Inter",system-ui,sans-serif; --body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;background:var(--bg);overflow-x:hidden;font-variant-numeric:tabular-nums}
+.glow{position:fixed;border-radius:50%;filter:blur(120px);opacity:.28;z-index:-1;pointer-events:none}
+h1,h2,h3,h4,p{margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding:26px 16px 40px}
+:focus-visible{outline:2px solid var(--ra);outline-offset:2px}
+h1{font-family:var(--head);font-size:clamp(32px,5.5vw,56px);line-height:1.05;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.subt{font-family:var(--head);font-size:clamp(18px,2.4vw,24px);color:var(--text2)}
+.lead{color:var(--text2);margin-top:10px;max-width:80ch}
+.warn{margin-top:16px;background:rgba(240,180,41,.1);border:1px solid rgba(240,180,41,.4);border-radius:12px;padding:10px 14px;color:#f6d589;font-size:14px}
+.warn a{color:#ffe29a}
+.layout{display:grid;grid-template-columns:380px minmax(0,1fr);gap:20px;margin-top:22px;align-items:start}
+@media (max-width:1000px){.layout{grid-template-columns:minmax(0,1fr)}.side{position:static!important;max-height:none!important}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;backdrop-filter:blur(6px);min-width:0}
+.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+h2{font-family:var(--head);font-size:19px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip.on{background:var(--ra);border-color:var(--ra);color:#fff;font-weight:600}
+.sec{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.l{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+input[type=number],select{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit;padding:8px 9px;min-width:0}
+input[type=range]{width:100%;accent-color:var(--ra)}
+.rv{float:right;color:var(--text);font-weight:600}
+.tog{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.tog input{accent-color:var(--ra);width:16px;height:16px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{background:none;border:0;color:var(--text2);font:inherit;font-size:13px;padding:7px 16px;cursor:pointer}
+.seg button.on{background:var(--grad);color:#fff;font-weight:600}
+.note{font-size:12px;color:var(--muted);margin-top:4px}
+details summary{cursor:pointer;font-weight:600}
+.trow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.heads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.heads{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
+.hc small{display:block;color:var(--muted);font-size:12px}
+.hc b{display:block;font-family:var(--head);font-size:clamp(20px,2.4vw,28px);margin:4px 0;overflow-wrap:anywhere}
+.hc span{font-size:12px;color:var(--text2)}
+.hc.last{background:linear-gradient(135deg,rgba(79,142,247,.25),rgba(155,99,240,.25),rgba(224,80,122,.25));border-color:rgba(155,99,240,.5)}
+.eq{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.bx{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.bx small{display:block;font-size:11px;color:var(--muted)}.bx b{font-family:var(--head);font-size:18px}
+.bx.ra{border-color:var(--ra)}.bx.oa{border-color:var(--oa)}.bx.life{border-color:var(--life)}.bx.tot{background:var(--grad);border:0}
+.bx.tot small{color:#fff}
+.op{color:var(--muted);font-size:20px}
+.pname{font-weight:600;margin-top:12px;color:var(--text2)}
+.hh{margin-top:8px;background:var(--grad);border-radius:12px;padding:12px 16px;font-family:var(--head);font-size:20px}
+.cbox{position:relative;height:300px}
+.tl{display:flex;gap:0;overflow-x:auto;padding-bottom:6px;margin-top:12px}
+.nd{flex:0 0 auto;min-width:112px;text-align:center;position:relative;padding-top:18px}
+.nd::before{content:"";position:absolute;top:6px;left:0;right:0;height:2px;background:var(--line)}
+.nd::after{content:"";position:absolute;top:1px;left:50%;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--ra)}
+.nd.last::after{background:var(--life)}
+.nd small{display:block;color:var(--muted);font-size:11px}.nd b{font-size:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{color:var(--muted);font-weight:500;text-align:right;padding:8px;white-space:nowrap}
+td{padding:8px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+.scroll{overflow-x:auto}
+.notice{background:rgba(155,99,240,.1);border:1px solid rgba(155,99,240,.35);border-radius:12px;padding:12px 14px;margin-top:12px;color:var(--text2);font-size:14px}
+.notice b{color:var(--text)}
+pre{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;overflow-x:auto;margin:6px 0 14px;color:#d5d8e6}
+.mh{font-size:13px;font-weight:600;margin-top:10px}
+.bd{display:inline-block;border-radius:999px;font-size:11px;padding:2px 9px;font-weight:600}
+.bd.o{background:rgba(79,142,247,.2);color:#9dc0fb}.bd.e{background:rgba(155,99,240,.2);color:#c5a2f7}.bd.a{background:rgba(240,180,41,.18);color:#f5cf7e}
+footer{margin-top:20px;font-size:12px;color:var(--muted)}
+.tag{color:var(--oa)}
+</style>
+</head>
+<body>
+<div class="glow" style="width:420px;height:420px;background:#4F8EF7;left:-120px;top:-100px"></div>
+<div class="glow" style="width:380px;height:380px;background:#9B63F0;right:-100px;top:200px"></div>
+<div class="glow" style="width:360px;height:360px;background:#E0507A;left:30%;bottom:-160px"></div>
+<div class="glow" style="width:320px;height:320px;background:#1FA88F;right:10%;bottom:-120px;opacity:.18"></div>
+
+<div class="wrap">
+<header>
+  <h1>CPF Retirement Income Projector</h1>
+  <div class="subt">From First Job to Monthly Income</div>
+  <p class="lead">Your CPF money sits in four accounts (OA, SA, MA, RA). At 55 your SA becomes a Retirement Account (RA), and at your CPF LIFE start age the RA and OA turn into a monthly income.</p>
+  <div class="warn">Educational model only. CPF LIFE payouts are estimates. Check with the CPF Board planners: <a href="https://www.cpf.gov.sg/member/tools-and-services/calculators" target="_blank" rel="noopener">cpf.gov.sg/member/tools-and-services/calculators</a></div>
+</header>
+
+<div class="layout">
+<!-- ================= INPUTS ================= -->
+<aside class="card side" id="side">
+  <h2>Inputs</h2>
+  <div class="chips" id="presets" style="margin-top:10px"></div>
+  <div class="sec"><label class="tog"><input type="checkbox" id="spouse"> Include spouse</label>
+    <div id="edWrap" style="margin-top:10px" hidden><div class="seg" id="edSeg"><button data-v="p1" class="on">Husband</button><button data-v="p2">Wife</button></div><p class="note">The form edits one person at a time. The wife starts with the husband's numbers.</p></div>
+    <div id="genderWrap" style="margin-top:10px"><label class="l" for="f_gender">Person 1: gender</label><select id="f_gender"><option value="M">Male</option><option value="F">Female</option></select></div></div>
+  <div class="sec"><h3>Today</h3>
+    <div class="g2"><div><label class="l" for="f_age">Current age (20–69)</label><input type="number" id="f_age" min="20" max="69"></div>
+      <div><label class="l" for="f_oa">OA balance</label><input type="number" id="f_oa" min="0"></div>
+      <div id="saWrap"><label class="l" for="f_sa">SA balance</label><input type="number" id="f_sa" min="0"></div>
+      <div id="raWrap" hidden><label class="l" for="f_ra">RA balance</label><input type="number" id="f_ra" min="0"></div>
+      <div><label class="l" for="f_ma">MA balance</label><input type="number" id="f_ma" min="0"></div></div></div>
+  <div class="sec"><h3>Work</h3>
+    <div class="g2"><div><label class="l" for="f_salary">Monthly salary</label><input type="number" id="f_salary" min="0"></div>
+      <div><label class="l" for="f_bonus">Annual bonus (months)</label><input type="number" id="f_bonus" min="0" step="0.5"></div></div>
+    <label class="l" for="f_growth" style="margin-top:10px">Salary growth <span class="rv" id="v_growth"></span></label><input type="range" id="f_growth" min="0" max="8" step="0.5">
+    <label class="l" for="f_stop">Stop working at age <span class="rv" id="v_stop"></span></label><input type="range" id="f_stop" min="45" max="70" step="1"></div>
+  <div class="sec"><h3>Housing</h3>
+    <label class="tog"><input type="checkbox" id="f_mort"> Pay mortgage with OA</label>
+    <div class="g2" style="margin-top:8px"><div><label class="l" for="f_mortAmt">OA used per month ($)</label><input type="number" id="f_mortAmt" min="0"></div>
+      <div><label class="l" for="f_mortYears">Years of mortgage left</label><input type="number" id="f_mortYears" min="0" max="35"></div></div></div>
+  <div class="sec"><h3>Retirement choices (both people)</h3>
+    <label class="l" for="s_life">CPF LIFE start age <span class="rv" id="v_life"></span></label><input type="range" id="s_life" min="65" max="70" step="1">
+    <div class="g2" style="margin-top:10px"><div><label class="l" for="s_sum">Retirement sum at 55</label><select id="s_sum"><option value="FRS">Full (FRS)</option><option value="BRS">Basic (BRS)</option><option value="ERS">Enhanced (ERS)</option></select></div>
+      <div><label class="l" for="s_oaYears">OA paid out over</label><select id="s_oaYears"><option>5</option><option>10</option><option>15</option><option selected>20</option><option>25</option><option>30</option></select></div></div></div>
+  <div class="sec"><h3>Cash top-ups to SA / RA</h3>
+    <div class="g2"><div><label class="l" for="f_topNow">One-time top-up now</label><input type="number" id="f_topNow" min="0"></div>
+      <div><label class="l" for="f_topAnnual">Annual top-up</label><input type="number" id="f_topAnnual" min="0"></div>
+      <div><label class="l" for="f_topUntil">Annual top-ups until age</label><input type="number" id="f_topUntil" min="20" max="70"></div></div></div>
+  <div class="sec"><details><summary>Advanced settings (shared)</summary>
+    <div class="g2" style="margin-top:10px">
+      <div><label class="l" for="a_oaRate">OA rate %</label><input type="number" id="a_oaRate" step="0.1"></div>
+      <div><label class="l" for="a_saRate">SA/MA/RA rate %</label><input type="number" id="a_saRate" step="0.1"></div>
+      <div><label class="l" for="a_sumGrowth">Retirement-sum growth after 2027 %</label><input type="number" id="a_sumGrowth" step="0.1"></div>
+      <div><label class="l" for="a_bhsGrowth">BHS growth %</label><input type="number" id="a_bhsGrowth" step="0.1"></div>
+      <div><label class="l" for="a_msUse">MediSave used per year $</label><input type="number" id="a_msUse"></div>
+      <div><label class="l" for="a_fem">Female CPF LIFE vs male %</label><input type="number" id="a_fem" step="1"></div>
+      <div><label class="l" for="a_infl">Inflation for today's dollars %</label><input type="number" id="a_infl" step="0.1"></div></div>
+    <label class="tog" style="margin-top:10px"><input type="checkbox" id="a_rise"> Include 2027 rate rise for ages 55–65</label>
+    <p class="note">The 2027 rise and the allocation split are the brief's figures and could not be confirmed from CPF Board's pages. Edit RULES in the script if they change.</p>
+    <button class="chip" id="resetAdv" style="margin-top:10px">Reset to defaults</button></details></div>
+</aside>
+
+<!-- ================= RESULTS ================= -->
+<main class="col">
+  <div class="trow">
+    <div class="seg" id="viewSeg" hidden><button data-v="p1" class="on">Husband</button><button data-v="p2">Wife</button><button data-v="hh">Household</button></div>
+    <div class="seg" id="dolSeg"><button data-v="future" class="on">Future dollars</button><button data-v="today">Today's dollars</button></div>
+  </div>
+  <div class="heads" id="heads"></div>
+  <section class="card"><h2>Monthly retirement income</h2><div id="incomeCard"></div>
+    <div class="cbox"><canvas id="cIncome"></canvas></div><p class="note" id="incomeNote" style="font-size:14px;color:var(--text2)"></p></section>
+  <section class="card"><h2>Timeline and account growth</h2><div class="tl" id="timeline"></div>
+    <div class="cbox" style="margin-top:12px"><canvas id="cAcc"></canvas></div></section>
+  <section class="card"><h2>Scenario Lab</h2>
+    <div class="trow" style="margin-top:8px"><div class="seg" id="labSeg" hidden><button data-v="p1" class="on">Husband</button><button data-v="p2">Wife</button></div></div>
+    <div class="tabs" id="labTabs"></div><div id="labBody"></div></section>
+  <section class="card"><details><summary>Show me the maths</summary><div id="maths" style="margin-top:12px"></div></details></section>
+  <section class="card"><details><summary>Rules used &amp; sources</summary><div id="rules" style="margin-top:12px"></div></details></section>
+</main>
+</div>
+<footer>Educational model only. Not financial advice. CPF LIFE payouts are estimates calibrated to CPF Board's published table; verify with the CPF Board's own planners before relying on any figure.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* =====================================================================
+   1. RULES — every rule and assumption lives here (edit freely)
+   ===================================================================== */
+const RULES = {
+  startYear: 2026,
+  owCeiling: 8000,            // Ordinary Wage ceiling per month
+  annualCeiling: 102000,      // annual salary ceiling (bonus counts only up to this)
+  // [max age, OA %, SA-or-RA %, MA %] as a % of wage
+  alloc: [[35,23,6,8],[45,21,7,9],[50,19,8,10],[55,15,11.5,10.5],[60,12,11.5,10.5],[65,3.5,11,10.5],[70,1,5,10.5],[999,1,1,10.5]],
+  rise2027: { from: 2027, band55_60: 1.5, band60_65: 1 },  // extra RA share, percentage points
+  FRS: 220400, BRS: 110200, ERS: 440800,                   // for members turning 55 in 2026
+  bhs: 79000,                                              // Basic Healthcare Sum 2026
+  extraBelow55: { first: 60000, oaMax: 20000, rate: 1 },   // % on first $60k (OA at most $20k)
+  extra55: { tier1: 30000, r1: 2, tier2: 30000, r2: 1, oaMax: 20000 },
+  // CPF LIFE calibration table: [RA at 55, RA at 65, monthly from 65, monthly from 70]
+  lifeTable: [[50000,82400,490,670],[110200,170100,950,1280],[150000,227900,1250,1670],[220400,330100,1780,2380],[300000,445600,2380,3170],[440800,650100,3440,4580]]
+};
+const ADV_DEFAULT = { oaRate: 2.5, saRate: 4, sumGrowth: 3.5, bhsGrowth: 4.5, msUse: 1500, fem: 94, infl: 2.5, rise: true };
+const PRESETS = {
+  "Age 45": { age:45, oa:150000, sa:180000, ma:70000, ra:0, salary:12000, bonus:2, growth:3, stop:60, mort:true, mortAmt:1500, mortYears:15 },
+  "Age 25": { age:25, oa:5000, sa:1500, ma:2000, ra:0, salary:4500, bonus:1, growth:4, stop:63, mort:false, mortAmt:0, mortYears:0 },
+  "Age 35": { age:35, oa:60000, sa:45000, ma:40000, ra:0, salary:7000, bonus:1.5, growth:3, stop:63, mort:true, mortAmt:1200, mortYears:25 },
+  "Age 52": { age:52, oa:180000, sa:170000, ma:75000, ra:0, salary:8500, bonus:1, growth:2, stop:63, mort:true, mortAmt:1000, mortYears:8 }
+};
+const PRESET_COMMON = { topNow: 0, topAnnual: 0, topUntil: 55 };
+
+/* =====================================================================
+   2. STATE
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const ST = {
+  spouse: false, ed: "p1", view: "p1", dollars: "future", lab: "p1", tab: "A", preset: "Age 45",
+  P: { p1: { ...PRESETS["Age 45"], ...PRESET_COMMON, gender: "M" }, p2: null },
+  sh: { life: 65, sum: "FRS", oaYears: 20 },
+  adv: { ...ADV_DEFAULT }
+};
+
+/* =====================================================================
+   3. ENGINE — pure functions, no page code
+   ===================================================================== */
+const frsOf = (y, adv) => RULES.FRS * Math.pow(1 + adv.sumGrowth / 100, Math.max(0, y - RULES.startYear));
+const sumsFor = (y, adv) => { const f = frsOf(y, adv); return { FRS: f, BRS: f * RULES.BRS / RULES.FRS, ERS: f * RULES.ERS / RULES.FRS }; };
+const bhsOf = (y, adv) => RULES.bhs * Math.pow(1 + adv.bhsGrowth / 100, Math.max(0, y - RULES.startYear));
+function allocFor(age, year, adv) {
+  const r = RULES.alloc.find(a => age <= a[0]); let [, oa, sr, ma] = r;
+  if (adv.rise && year >= RULES.rise2027.from) { if (age > 55 && age <= 60) sr += RULES.rise2027.band55_60; else if (age > 60 && age <= 65) sr += RULES.rise2027.band60_65; }
+  return { oa, sr, ma };
+}
+// extra interest from 55: +2% on first $30k, +1% on next $30k, counted in order RA, OA (max $20k), MA
+function extra55(ra, oa, ma) {
+  const E = RULES.extra55; let left1 = E.tier1, left2 = E.tier2, amt = 0;
+  for (const bal of [ra, Math.min(oa, E.oaMax), ma]) {
+    const a = Math.min(bal, left1); amt += a * E.r1 / 100; left1 -= a;
+    const b = Math.min(bal - a, left2); amt += b * E.r2 / 100; left2 -= b;
+  }
+  return amt;
+}
+// Month-by-month projection from Jan 2026 until the January the person turns `stopAge` (CPF LIFE start by default).
+function simulate(p, sh, adv, stopAge) {
+  const a0 = p.age, target = stopAge || sh.life, M = Math.max(0, (target - a0) * 12);
+  let oa = p.oa, sa = a0 >= 55 ? 0 : p.sa, ma = p.ma, ra = a0 >= 55 ? p.ra : 0;
+  const year55 = a0 >= 55 ? RULES.startYear : RULES.startYear + 55 - a0;
+  const S55 = sumsFor(year55, adv), chosen = S55[sh.sum], year65 = Math.max(RULES.startYear, RULES.startYear + 65 - a0);
+  const oaR = adv.oaRate / 100, saR = adv.saRate / 100;
+  const acc = { oa: 0, sa: 0, ma: 0, ra: 0 };
+  const T = { start: oa + sa + ma + ra, contrib: 0, topReq: 0, topAcc: 0, interest: 0, housing: 0, ms: 0 };
+  const snaps = [], info = { first: null, form: null, cpf55: a0 >= 55 ? oa + ma + ra : null, ra55: a0 >= 55 ? ra : null };
+  const snap = (age, year) => snaps.push({ age, year, oa, sa, ma, ra, total: oa + sa + ma + ra });
+  const overflow = (a, yr) => {
+    const cap = Math.min(bhsOf(yr, adv), bhsOf(year65, adv));
+    if (ma > cap) { const ex = ma - cap; ma = cap;
+      if (a < 55) { const t = Math.min(ex, Math.max(0, frsOf(yr, adv) - sa)); sa += t; oa += ex - t; }
+      else { const t = Math.min(ex, Math.max(0, S55.FRS - ra)); ra += t; oa += ex - t; } }
+  };
+  for (let m = 0; m < M; m++) {
+    const mo = m % 12, yr = RULES.startYear + Math.floor(m / 12), a = a0 + Math.floor(m / 12);
+    if (mo === 0) {
+      if (a === 55 && a0 < 55) {                                   // SA closes, RA is formed
+        info.cpf55 = oa + sa + ma; const fromSA = Math.min(sa, chosen), fromOA = Math.min(oa, chosen - fromSA);
+        const left = sa - fromSA; ra = fromSA + fromOA; oa = oa - fromOA + left; sa = 0;
+        info.ra55 = ra; info.form = { sum: chosen, name: sh.sum, fromSA, fromOA, left, year: yr };
+      }
+      snap(a, yr);
+      let top = 0; if (m === 0) top += p.topNow; if (a < p.topUntil) top += p.topAnnual;
+      if (top > 0) {
+        T.topReq += top; let acc1;
+        if (a < 55) { acc1 = Math.min(top, Math.max(0, frsOf(yr, adv) - sa)); sa += acc1; }
+        else { acc1 = Math.min(top, Math.max(0, S55.ERS - ra)); ra += acc1; }
+        T.topAcc += acc1;
+      }
+    }
+    if (a < p.stop) {                                              // contributions
+      const gr = Math.pow(1 + p.growth / 100, Math.floor(m / 12)), sal = p.salary * gr, W = Math.min(sal, RULES.owCeiling);
+      let wage = W; if (mo === 11) wage += Math.min(p.bonus * sal, Math.max(0, RULES.annualCeiling - 12 * W));
+      const al = allocFor(a, yr, adv), cO = wage * al.oa / 100, cS = wage * al.sr / 100, cM = wage * al.ma / 100;
+      oa += cO; ma += cM;
+      if (a < 55) sa += cS; else { const t = Math.min(cS, Math.max(0, S55.FRS - ra)); ra += t; oa += cS - t; }
+      T.contrib += cO + cS + cM;
+      if (!info.first) info.first = { age: a, W, al, cO, cS, cM, total: cO + cS + cM, sal };
+    }
+    if (p.mort && m < p.mortYears * 12) { const pay = Math.min(oa, p.mortAmt); oa -= pay; T.housing += pay; }
+    overflow(a, yr);
+    acc.oa += oa * oaR / 12; acc.ma += ma * saR / 12;               // interest accrues monthly
+    if (a < 55) { acc.sa += sa * saR / 12 + (RULES.extraBelow55.rate / 100 / 12) * Math.min(RULES.extraBelow55.first, Math.min(oa, RULES.extraBelow55.oaMax) + sa + ma); }
+    else { acc.ra += ra * saR / 12 + extra55(ra, oa, ma) / 12; }
+    if (mo === 11) {                                                // December: MediSave use, then credit interest
+      const use = Math.min(ma, adv.msUse); ma -= use; T.ms += use;
+      oa += acc.oa; ma += acc.ma; sa += acc.sa; ra += acc.ra;
+      T.interest += acc.oa + acc.ma + acc.sa + acc.ra; acc.oa = acc.ma = acc.sa = acc.ra = 0; overflow(a, yr);
+    }
+  }
+  snap(target, RULES.startYear + Math.max(0, target - a0));
+  T.final = oa + sa + ma + ra;
+  T.check = T.start + T.contrib + T.topAcc + T.interest - T.housing - T.ms;
+  return { oa, sa, ma, ra, snaps, info, T, chosen, S55, year55, year65, a0 };
+}
+
+// --- CPF LIFE estimate, calibrated to the table ---
+function interp(col, x) {
+  const t = RULES.lifeTable, xs = t.map(r => r[1]), ys = t.map(r => r[col]);
+  if (x <= xs[0]) return ys[0] * x / xs[0];
+  for (let i = 1; i < xs.length; i++) if (x <= xs[i]) return ys[i - 1] + (ys[i] - ys[i - 1]) * (x - xs[i - 1]) / (xs[i] - xs[i - 1]);
+  const n = xs.length - 1; return ys[n] + (ys[n] - ys[n - 1]) * (x - xs[n]) / (xs[n] - xs[n - 1]);
+}
+function growRA(x, years, adv) { for (let k = 0; k < years; k++) { const e = RULES.extra55; x += x * adv.saRate / 100 + Math.min(x, e.tier1) * e.r1 / 100 + Math.max(0, Math.min(x - e.tier1, e.tier2)) * e.r2 / 100; } return x; }
+function lifeEstimate(raStart, s, gender, adv) {
+  let eq = raStart;
+  if (s > 65 && raStart > 0) { let lo = 0, hi = raStart; for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (growRA(mid, s - 65, adv) < raStart) lo = mid; else hi = mid; } eq = (lo + hi) / 2; }
+  const p65 = interp(2, eq), p70 = interp(3, eq), f = gender === "F" ? adv.fem / 100 : 1;
+  const pay = p65 > 0 ? p65 * Math.pow(p70 / p65, (s - 65) / 5) * f : 0;
+  return { eq, p65, p70, pay, f };
+}
+const oaAnnuity = (bal, rate, years) => { const r = rate / 100 / 12, n = years * 12; return bal <= 0 ? 0 : r === 0 ? bal / n : bal * r / (1 - Math.pow(1 + r, -n)); };
+
+function project(p, sh, adv, stopAge) {
+  const sim = simulate(p, sh, adv, stopAge), s = stopAge || sh.life;
+  const life = lifeEstimate(sim.ra, s, p.gender, adv), oaPay = oaAnnuity(sim.oa, adv.oaRate, sh.oaYears);
+  return { sim, life, oaPay, total: life.pay + oaPay, s, p, startYear: RULES.startYear + (s - p.age), oaEnd: s + sh.oaYears };
+}
+
+/* =====================================================================
+   4. FORMATTING
+   ===================================================================== */
+const nf = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 0 });
+const $$ = v => "$" + nf.format(Math.round(v));
+const mo = v => $$(v) + "/mo";
+const factor = y => ST.dollars === "today" ? Math.pow(1 + ST.adv.infl / 100, -(y - RULES.startYear)) : 1;
+const people = () => ST.spouse ? ["p1", "p2"] : ["p1"];
+const pname = k => ST.spouse ? (k === "p1" ? "Husband" : "Wife") : "Person 1";
+
+/* =====================================================================
+   5. DISPLAY
+   ===================================================================== */
+const charts = {};
+function chart(id, cfg) {
+  if (!window.Chart) { $(id).parentElement.innerHTML = '<p class="note">Charts need an internet connection to load Chart.js. All numbers still work.</p>'; return; }
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart($(id), cfg);
+}
+const axisCol = "#9aa0b4";
+function baseOpts(stacked, yfmt) {
+  return { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: "index", intersect: false },
+    scales: { x: { stacked, ticks: { color: axisCol, maxTicksLimit: 14 }, grid: { color: "rgba(255,255,255,.05)" } }, y: { stacked, ticks: { color: axisCol, callback: yfmt || (v => "$" + (v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1000 ? Math.round(v / 1000) + "k" : v)) }, grid: { color: "rgba(255,255,255,.07)" } } },
+    plugins: { legend: { labels: { color: "#c9cde0", boxWidth: 12 } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${$$(c.parsed.y)}` } } } };
+}
+let R = {};      // projections by person
+function recompute() { R = {}; people().forEach(k => R[k] = project(ST.P[k], ST.sh, ST.adv)); }
+
+function renderHeads() {
+  const keys = ST.view === "hh" ? people() : [ST.view];
+  const sum = f => keys.reduce((a, k) => a + f(R[k]), 0);
+  const cpf55 = sum(r => (r.sim.info.cpf55 ?? r.sim.snaps[0].total) * factor(r.sim.year55));
+  const ra = sum(r => r.sim.ra * factor(r.startYear)), oa = sum(r => r.sim.oa * factor(r.startYear)), inc = sum(r => r.total * factor(r.startYear));
+  const h = (t, v, s, last) => `<div class="hc ${last ? "last" : ""}"><small>${t}</small><b>${v}</b><span>${s}</span></div>`;
+  $("heads").innerHTML = h("CPF at 55", $$(cpf55), "OA + SA + MA when turning 55") + h("RA when CPF LIFE starts", $$(ra), "Funds the CPF LIFE payout") + h("OA when CPF LIFE starts", $$(oa), "Funds the OA monthly payout") + h("Monthly income", mo(inc), "CPF LIFE + OA payout", true);
+}
+function renderIncome() {
+  const keys = ST.view === "hh" ? people() : [ST.view];
+  let h = "";
+  keys.forEach(k => {
+    const r = R[k], f = factor(r.startYear);
+    h += `${ST.spouse ? `<div class="pname">${pname(k)}</div>` : ""}<div class="eq">
+      <div class="bx ra"><small>RA at ${r.s}</small><b>${$$(r.sim.ra * f)}</b></div><span class="op">→</span>
+      <div class="bx life"><small>CPF LIFE, for life</small><b>${mo(r.life.pay * f)}</b></div><span class="op">+</span>
+      <div class="bx oa"><small>OA at ${r.s}</small><b>${$$(r.sim.oa * f)}</b></div><span class="op">→</span>
+      <div class="bx oa"><small>OA payout, ${ST.sh.oaYears} years, to age ${r.oaEnd}</small><b>${mo(r.oaPay * f)}</b></div><span class="op">=</span>
+      <div class="bx tot"><small>Total</small><b>${mo(r.total * f)}</b></div></div>`;
+  });
+  if (ST.view === "hh") h += `<div class="hh">Household total: ${mo(keys.reduce((a, k) => a + R[k].total * factor(R[k].startYear), 0))}</div>`;
+  $("incomeCard").innerHTML = h;
+  // chart: monthly income by age (single) or by calendar year (household)
+  let labels = [], ds;
+  const pay = (r, age) => ({ life: age >= r.s ? r.life.pay : 0, oa: age >= r.s && age < r.oaEnd ? r.oaPay : 0 });
+  if (ST.view !== "hh") {
+    const r = R[ST.view]; for (let a = r.s; a <= 95; a++) labels.push(a);
+    const yr = a => RULES.startYear + a - r.p.age;
+    ds = [{ label: "CPF LIFE", backgroundColor: "#E0507A", data: labels.map(a => pay(r, a).life * factor(yr(a))) }, { label: "OA payout", backgroundColor: "#4F8EF7", data: labels.map(a => pay(r, a).oa * factor(yr(a))) }];
+  } else {
+    const y0 = Math.min(...people().map(k => R[k].startYear)), y1 = Math.max(...people().map(k => RULES.startYear + 95 - ST.P[k].age));
+    for (let y = y0; y <= y1; y++) labels.push(y);
+    const cols = { p1: ["#E0507A", "#4F8EF7"], p2: ["#F59BB4", "#9CC0FB"] };
+    ds = []; people().forEach(k => { const r = R[k]; ds.push({ label: pname(k) + " CPF LIFE", backgroundColor: cols[k][0], data: labels.map(y => pay(r, y - RULES.startYear + r.p.age).life * factor(y)) }, { label: pname(k) + " OA payout", backgroundColor: cols[k][1], data: labels.map(y => pay(r, y - RULES.startYear + r.p.age).oa * factor(y)) }); });
+  }
+  chart("cIncome", { type: "bar", data: { labels, datasets: ds }, options: baseOpts(true) });
+  const r0 = R[ST.view === "hh" ? "p1" : ST.view];
+  $("incomeNote").textContent = `The OA payout stops at age ${r0.oaEnd}. After that, ${mo(r0.life.pay * factor(r0.startYear))} of CPF LIFE continues for life${ST.view === "hh" ? " (shown for the husband; the wife's dates differ)" : ""}.`;
+}
+function renderTimeline() {
+  const keys = ST.view === "hh" ? people() : [ST.view]; let h = "";
+  keys.forEach(k => {
+    const r = R[k], p = r.p, snaps = r.sim.snaps, at = age => snaps.find(s => s.age === age);
+    const nodes = [["Today", p.age, snaps[0]]];
+    [35, 45].forEach(a => { if (a > p.age && a < r.s && at(a)) nodes.push([`Age ${a}`, a, at(a)]); });
+    if (p.age < 55) nodes.push(["Age 55 · RA formed", 55, at(55)]);
+    if (p.stop > p.age && p.stop < r.s && p.stop !== 55) nodes.push(["Stop work", p.stop, at(p.stop)]);
+    nodes.push(["CPF LIFE start", r.s, snaps[snaps.length - 1]]);
+    const cal = ST.view === "hh", f = x => factor(RULES.startYear + x.age - p.age);
+    h += (ST.spouse ? `<div class="pname" style="width:100%">${pname(k)}</div>` : "") + `<div class="tl">` +
+      nodes.filter(n => n[2]).map(n => `<div class="nd"><small>${n[0]}</small><b>${cal ? RULES.startYear + n[1] - p.age : "Age " + n[1]}</b><small>${$$(n[2].total * f(n[2]))} CPF</small></div>`).join("") +
+      `<div class="nd last"><small>Monthly income</small><b>${mo(r.total * factor(r.startYear))}</b></div></div>`;
+  });
+  $("timeline").outerHTML = `<div id="timeline">${h}</div>`;
+  // account chart
+  let labels, ds;
+  if (ST.view !== "hh") {
+    const r = R[ST.view], sn = r.sim.snaps, p = r.p;
+    labels = sn.map(s => s.age); const fx = s => factor(s.year);
+    const mk = (name, key, col) => ({ label: name, data: sn.map(s => s[key] * fx(s)), backgroundColor: col + "cc", borderColor: col, fill: true, pointRadius: 0, tension: .2 });
+    ds = [mk("OA", "oa", "#4F8EF7"), mk("SA", "sa", "#C47F14"), mk("RA", "ra", "#9B63F0"), mk("MA", "ma", "#1FA88F")];
+  } else {
+    const y1 = Math.max(...people().map(k => R[k].startYear)); labels = []; for (let y = RULES.startYear; y <= y1; y++) labels.push(y);
+    const cols = { p1: "#4F8EF7", p2: "#E0507A" }; ds = [];
+    people().forEach(k => { const r = R[k], sn = r.sim.snaps; const data = labels.map(y => { const s = sn.find(x => x.year === y) || sn[sn.length - 1]; return s.total * factor(y); });
+      ds.push({ label: pname(k), data, backgroundColor: cols[k] + "99", borderColor: cols[k], fill: true, pointRadius: 0, segment: { borderDash: c => labels[c.p0DataIndex] >= r.startYear ? [5, 4] : undefined } }); });
+  }
+  const o = baseOpts(true); o.scales.x.ticks.maxTicksLimit = 12;
+  chart("cAcc", { type: "line", data: { labels, datasets: ds }, options: o });
+}
+
+/* ---------- Scenario Lab ---------- */
+const TABS = { A: "A. Do nothing", B: "B. Top up earlier", C: "C. Housing", D: "D. Higher salary", E: "E. Retirement age", F: "F. CPF LIFE start age" };
+function variants(tab, p) {
+  const o = (label, patch, shPatch) => ({ label, p: { ...p, ...patch }, sh: { ...ST.sh, ...(shPatch || {}) } });
+  const uniq = (arr, key) => { const seen = new Set(); return arr.filter(v => { const k = key(v); if (seen.has(k)) return false; seen.add(k); return true; }); };
+  if (tab === "B") { const now = p.topNow || 30000, ann = p.topAnnual || 8000;
+    return [o("No top-up", { topNow: 0, topAnnual: 0 }), o(`One-time ${$$(now)} now`, { topNow: now, topAnnual: 0 }), o(`${$$(ann)} a year to 55`, { topNow: 0, topAnnual: ann, topUntil: 55 }), o("ERS set aside at 55", { topNow: 0, topAnnual: 0 }, { sum: "ERS" })]; }
+  if (tab === "C") { const yrs = p.mortYears > 0 ? p.mortYears : 15;
+    return uniq([0, 1000, 1500, 2000, p.mort ? p.mortAmt : 0].map(a => o(a ? `${$$(a)}/mo OA mortgage` : "No mortgage", { mort: a > 0, mortAmt: a, mortYears: yrs })), v => v.p.mortAmt + "|" + v.p.mort); }
+  if (tab === "D") return uniq([0, 3, 5, 7, p.growth].map(g => o(`${g}% salary growth`, { growth: g })), v => v.p.growth);
+  if (tab === "E") return uniq([55, 60, 65, p.stop].map(a => o(`Stop work at ${a}`, { stop: a })), v => v.p.stop);
+  if (tab === "F") return [65, 66, 67, 68, 69, 70].map(s => ({ label: `Start at ${s}`, p, sh: { ...ST.sh, life: s }, s }));
+  return [];
+}
+function renderLab() {
+  $("labSeg").hidden = !ST.spouse; if (!ST.spouse) ST.lab = "p1";
+  document.querySelectorAll("#labSeg button").forEach(b => b.classList.toggle("on", b.dataset.v === ST.lab));
+  $("labTabs").innerHTML = Object.entries(TABS).map(([k, v]) => `<button class="chip ${k === ST.tab ? "on" : ""}" data-t="${k}">${v}</button>`).join("");
+  document.querySelectorAll("#labTabs .chip").forEach(b => b.onclick = () => { ST.tab = b.dataset.t; renderLab(); });
+  const p = ST.P[ST.lab];
+  if (ST.tab === "A") {
+    const base = { ...p, topNow: 0, topAnnual: 0, mort: false };
+    const ages = [55, 60, ST.sh.life].filter((a, i, arr) => a > p.age && arr.indexOf(a) === i);
+    const rows = ages.map(a => { const s = simulate(base, ST.sh, ST.adv, a), T = s.T; return { a, start: T.start, con: T.contrib - T.ms, int: T.interest, total: s.oa + s.sa + s.ma + s.ra }; });
+    $("labBody").innerHTML = `<div class="cbox"><canvas id="cLab"></canvas></div><div class="scroll" style="margin-top:10px"><table><tr><th>At age</th><th>Starting balance</th><th>Contributions after MediSave use</th><th>Interest</th><th>Total</th><th>Interest share</th></tr>${rows.map(r => `<tr><td>${r.a}</td><td>${$$(r.start)}</td><td>${$$(r.con)}</td><td>${$$(r.int)}</td><td>${$$(r.total)}</td><td>${r.total ? (r.int / r.total * 100).toFixed(0) : 0}%</td></tr>`).join("")}</table></div>
+      <div class="notice"><b>What to notice:</b> with no top-ups and no mortgage, ${rows.length ? `interest makes up about ${(rows[rows.length - 1].int / rows[rows.length - 1].total * 100).toFixed(0)}% of the balance at age ${rows[rows.length - 1].a}` : "there is no future date to show"}. Time does much of the work.</div>`;
+    chart("cLab", { type: "bar", data: { labels: rows.map(r => "Age " + r.a), datasets: [{ label: "Starting balance", data: rows.map(r => r.start), backgroundColor: "#4F8EF7" }, { label: "Contributions after MediSave use", data: rows.map(r => r.con), backgroundColor: "#9B63F0" }, { label: "Interest", data: rows.map(r => r.int), backgroundColor: "#1FA88F" }] }, options: baseOpts(true) });
+    return;
+  }
+  const vs = variants(ST.tab, p).map(v => ({ v, r: project(v.p, v.sh, ST.adv, v.sh.life) }));
+  const catch65 = vs[0] ? vs[0].r.life.pay : 0;
+  const head = ST.tab === "F" ? "<th>Start age</th><th>RA at start</th><th>CPF LIFE</th><th>OA at start</th><th>OA payout</th><th>Total income</th><th>Catch-up age</th>" : "<th>Scenario</th><th>RA at start</th><th>CPF LIFE</th><th>OA at start</th><th>OA payout</th><th>Total income</th>";
+  const body = vs.map(({ v, r }, i) => {
+    let extra = ""; if (ST.tab === "F") { const d = r.life.pay - catch65; extra = `<td>${i === 0 ? "–" : d > 0 ? ((r.life.pay * v.s - catch65 * 65) / d).toFixed(1) : "–"}</td>`; }
+    return `<tr><td>${v.label}</td><td>${$$(r.sim.ra)}</td><td>${mo(r.life.pay)}</td><td>${$$(r.sim.oa)}</td><td>${mo(r.oaPay)}</td><td><b>${mo(r.total)}</b></td>${extra}</tr>`; }).join("");
+  const tops = ST.tab === "B" ? vs.filter(x => x.r.sim.T.topAcc + 1 < x.r.sim.T.topReq).map(x => x.v.label) : [];
+  const best = vs.reduce((a, b) => b.r.total > a.r.total ? b : a, vs[0]), worst = vs.reduce((a, b) => b.r.total < a.r.total ? b : a, vs[0]);
+  const notes = {
+    B: `Cash top-ups go into SA before 55 (up to the Full Retirement Sum) and into RA from 55 (up to the Enhanced Retirement Sum). They earn up to 4% plus extra interest, may qualify for tax relief of up to $8,000 a year (IRAS), and cannot be withdrawn.${tops.length ? ` A cap limited the cash accepted in: ${tops.join(", ")}.` : ""}`,
+    C: `OA money used for the mortgage stops earning interest. Over a long mortgage, the OA at retirement and the OA payout fall; CPF LIFE changes little because it depends on the RA.`,
+    D: `Contributions are based on salary only up to the $${nf.format(RULES.owCeiling)} monthly ceiling, so faster growth helps less once pay passes the ceiling. Once the RA holds the FRS, later contributions mostly go to OA.`,
+    E: `Stopping work earlier means fewer contributions. Once the RA already holds the FRS, later contributions mostly go to OA, so the CPF LIFE payout changes less than the OA payout.`,
+    F: `Starting CPF LIFE later gives a higher payout each month but fewer years of payments. The catch-up age is when the later start overtakes the age-65 start in total CPF LIFE received.`
+  };
+  $("labBody").innerHTML = `<div class="cbox"><canvas id="cLab"></canvas></div><div class="scroll" style="margin-top:10px"><table><tr>${head}</tr>${body}</table></div>
+    <div class="notice"><b>What to notice:</b> total income ranges from ${mo(worst.r.total)} (${worst.v.label}) to ${mo(best.r.total)} (${best.v.label}). ${notes[ST.tab]}</div>`;
+  chart("cLab", { type: "bar", data: { labels: vs.map(x => x.v.label), datasets: [{ label: "CPF LIFE", data: vs.map(x => x.r.life.pay), backgroundColor: "#E0507A" }, { label: "OA payout", data: vs.map(x => x.r.oaPay), backgroundColor: "#4F8EF7" }] }, options: baseOpts(true) });
+}
+
+/* ---------- Show me the maths + Rules ---------- */
+function renderMaths() {
+  const k = ST.spouse ? ST.lab : "p1", r = R[k], sim = r.sim, p = r.p, I = sim.info, T = sim.T, L = r.life;
+  const c = I.first, al = c ? c.al : null, pre = t => `<pre>${t}</pre>`;
+  let h = `<div class="mh">Person: ${pname(k)}</div>`;
+  h += `<div class="mh">1. This month's contribution split</div>` + (c ? pre(`Age ${c.age}, wage counted = min(${$$(c.sal)}, ${$$(RULES.owCeiling)}) = ${$$(c.W)}\nOA ${al.oa}% = ${$$(c.cO)}   SA/RA ${al.sr}% = ${$$(c.cS)}   MA ${al.ma}% = ${$$(c.cM)}\nTotal ${$$(c.total)}`) : pre("No contributions: working has already stopped."));
+  h += `<div class="mh">2. Interest rules</div>` + pre(`Base: OA ${ST.adv.oaRate}%, SA/MA/RA ${ST.adv.saRate}% a year, worked out monthly, credited each December.\nBelow 55: +1% on the first $60,000 of combined balances (OA at most $20,000), paid into SA.\nFrom 55: +2% on the first $30,000 and +1% on the next $30,000 (counted RA, OA, MA; OA at most $20,000), paid into RA.\nTotal interest credited to age ${r.s}: ${$$(T.interest)}`);
+  h += `<div class="mh">3. RA formation at 55</div>` + (I.form ? pre(`${I.form.name} for ${I.form.year} = ${$$(I.form.sum)}\nFrom SA ${$$(I.form.fromSA)}   From OA ${$$(I.form.fromOA)}   SA left over to OA ${$$(I.form.left)}\nRA at 55 = ${$$(I.ra55)}`) : pre("RA already exists today, so no formation step."));
+  h += `<div class="mh">4. CPF LIFE (Standard plan)</div>` + pre(`RA at ${r.s} = ${$$(sim.ra)}${r.s > 65 ? `\nRA-at-65 equivalent (undoing ${r.s - 65} years of interest) = ${$$(L.eq)}` : ""}\nTable read-off: P65 = ${$$(L.p65)}/mo, P70 = ${$$(L.p70)}/mo\nPayout = P65 × (P70 ÷ P65)^((${r.s} − 65) ÷ 5)${L.f !== 1 ? ` × ${(L.f * 100).toFixed(0)}% (female factor)` : ""} = ${$$(L.pay)}/mo`);
+  const rr = ST.adv.oaRate / 100 / 12, n = ST.sh.oaYears * 12;
+  h += `<div class="mh">5. OA monthly payout</div>` + pre(`Payout = OA × r ÷ (1 − (1 + r)^−n), r = ${ST.adv.oaRate}% ÷ 12 = ${rr.toFixed(6)}, n = ${n}\n= ${$$(sim.oa)} × ${rr.toFixed(6)} ÷ (1 − ${Math.pow(1 + rr, -n).toFixed(6)}) = ${$$(r.oaPay)}/mo`);
+  const ok = Math.abs(T.final - T.check) < 1;
+  h += `<div class="mh">6. Balance check</div>` + pre(`Start ${$$(T.start)} + contributions ${$$(T.contrib)} + top-ups ${$$(T.topAcc)} + interest ${$$(T.interest)} − housing ${$$(T.housing)} − MediSave use ${$$(T.ms)}\n= ${$$(T.check)}   Final balance ${$$(T.final)}   ${ok ? "✓ matches" : "✗ differs"}`);
+  $("maths").innerHTML = h;
+  const row = (a, b, badge) => `<tr><td>${a}</td><td>${b}</td><td style="text-align:right"><span class="bd ${badge === "Official 2026" ? "o" : badge === "CPF estimate" ? "e" : "a"}">${badge}</span></td></tr>`;
+  $("rules").innerHTML = `<div class="scroll"><table><tr><th>Rule</th><th>Value</th><th></th></tr>
+    ${row("Ordinary Wage ceiling", $$(RULES.owCeiling) + " a month", "Official 2026")}${row("Total contribution rates", "37% to 55; 34% (55–60); 25% (60–65); 16.5%; 12.5%", "Official 2026")}
+    ${row("OA / SA-or-RA / MA split", "Per table in RULES.alloc", "Assumption")}${row("Annual salary ceiling", $$(RULES.annualCeiling), "Assumption")}
+    ${row("2027 rate rise (ages 55–65)", "+1.5 and +1 points to RA share", "Assumption")}${row("Interest rates", "OA 2.5%, SA/MA/RA 4%, extra interest as in the brief", "Official 2026")}
+    ${row("Retirement sums (turn 55 in 2026)", `BRS ${$$(RULES.BRS)}, FRS ${$$(RULES.FRS)}, ERS ${$$(RULES.ERS)}`, "Official 2026")}${row("Retirement-sum growth", ST.adv.sumGrowth + "% a year after 2027", "Assumption")}
+    ${row("Basic Healthcare Sum 2026", $$(RULES.bhs), "Official 2026")}${row("BHS growth", ST.adv.bhsGrowth + "% a year", "Assumption")}
+    ${row("CPF LIFE estimate", "Interpolated from CPF Board's published table", "CPF estimate")}${row("Female CPF LIFE factor", ST.adv.fem + "%", "Assumption")}</table></div>
+    <p class="note" style="margin-top:10px">Sources: <a class="tag" href="https://www.cpf.gov.sg/employer/employer-obligations/how-much-cpf-contributions-to-pay" target="_blank" rel="noopener">CPF contribution and allocation rates</a> · <a class="tag" href="https://www.cpf.gov.sg/bhs" target="_blank" rel="noopener">Basic Healthcare Sum</a> · <a class="tag" href="https://www.cpf.gov.sg/member/tools-and-services/calculators" target="_blank" rel="noopener">CPF calculators, including CPF LIFE estimator</a> · <a class="tag" href="https://www.moh.gov.sg" target="_blank" rel="noopener">MOH: MediSave limits for Integrated Shield Plans</a></p>`;
+}
+
+/* =====================================================================
+   6. CONTROLS
+   ===================================================================== */
+const FIELDS = ["age", "oa", "sa", "ma", "ra", "salary", "bonus", "growth", "stop", "mortAmt", "mortYears", "topNow", "topAnnual", "topUntil"];
+function loadForm() {
+  const p = ST.P[ST.ed];
+  FIELDS.forEach(f => $("f_" + f).value = p[f]); $("f_mort").checked = p.mort; $("f_gender").value = p.gender;
+  $("v_growth").textContent = p.growth + "%"; $("v_stop").textContent = p.stop;
+  $("raWrap").hidden = p.age < 55; $("saWrap").hidden = p.age >= 55;
+  $("genderWrap").hidden = ST.spouse;
+  $("s_life").value = ST.sh.life; $("v_life").textContent = ST.sh.life; $("s_sum").value = ST.sh.sum; $("s_oaYears").value = ST.sh.oaYears;
+  ["oaRate", "saRate", "sumGrowth", "bhsGrowth", "msUse", "fem", "infl"].forEach(k => $("a_" + k).value = ST.adv[k]); $("a_rise").checked = ST.adv.rise;
+  $("edWrap").hidden = !ST.spouse; $("viewSeg").hidden = !ST.spouse;
+  document.querySelectorAll("#edSeg button").forEach(b => b.classList.toggle("on", b.dataset.v === ST.ed));
+  document.querySelectorAll("#viewSeg button").forEach(b => b.classList.toggle("on", b.dataset.v === ST.view));
+  document.querySelectorAll("#dolSeg button").forEach(b => b.classList.toggle("on", b.dataset.v === ST.dollars));
+  document.querySelectorAll("#presets .chip").forEach(b => b.classList.toggle("on", b.dataset.v === ST.preset));
+}
+function readForm() {
+  const p = ST.P[ST.ed], n = (id, d = 0) => { const v = parseFloat($(id).value); return isFinite(v) ? Math.max(0, v) : d; };
+  FIELDS.forEach(f => p[f] = n("f_" + f)); p.age = Math.min(69, Math.max(20, p.age)); p.mort = $("f_mort").checked; p.gender = $("f_gender").value;
+  if (!ST.spouse) ST.P.p1.gender = $("f_gender").value;
+  ST.sh.life = +$("s_life").value; ST.sh.sum = $("s_sum").value; ST.sh.oaYears = +$("s_oaYears").value;
+  const a = ST.adv; ["oaRate", "saRate", "sumGrowth", "bhsGrowth", "msUse", "fem", "infl"].forEach(k => a[k] = n("a_" + k, ADV_DEFAULT[k])); a.rise = $("a_rise").checked;
+  $("v_growth").textContent = p.growth + "%"; $("v_stop").textContent = p.stop; $("v_life").textContent = ST.sh.life;
+  $("raWrap").hidden = p.age < 55; $("saWrap").hidden = p.age >= 55;
+}
+let timer;
+function refresh() { recompute(); renderHeads(); renderIncome(); renderTimeline(); renderLab(); renderMaths(); }
+const later = () => { clearTimeout(timer); timer = setTimeout(refresh, 120); };
+
+Object.keys(PRESETS).forEach(k => { const b = document.createElement("button"); b.className = "chip"; b.dataset.v = k; b.textContent = k + (k === "Age 45" ? " (course case)" : k === "Age 25" ? " (first job)" : k === "Age 35" ? " (young family)" : " (final stretch)"); b.onclick = () => { ST.preset = k; const g = ST.P[ST.ed].gender; ST.P[ST.ed] = { ...PRESETS[k], ...PRESET_COMMON, gender: g }; if (ST.spouse && ST.ed === "p1") ST.P.p2 = { ...ST.P.p1 }; loadForm(); refresh(); }; $("presets").appendChild(b); });
+document.querySelectorAll("#side input, #side select").forEach(e => { if (e.id !== "spouse") e.addEventListener("input", () => { readForm(); ST.preset = ""; document.querySelectorAll("#presets .chip").forEach(b => b.classList.remove("on")); later(); }); });
+$("spouse").onchange = e => { ST.spouse = e.target.checked; if (ST.spouse) { ST.P.p2 = { ...ST.P.p1, gender: "F" }; ST.P.p1.gender = "M"; } else { ST.ed = "p1"; ST.view = "p1"; ST.lab = "p1"; } loadForm(); refresh(); };
+const wireSeg = (id, key, after) => document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => { ST[key] = b.dataset.v; if (key === "ed") ST.preset = ""; loadForm(); (after || refresh)(); });
+wireSeg("edSeg", "ed"); wireSeg("viewSeg", "view"); wireSeg("dolSeg", "dollars"); wireSeg("labSeg", "lab");
+$("resetAdv").onclick = () => { ST.adv = { ...ADV_DEFAULT }; loadForm(); refresh(); };
+if (window.Chart) { Chart.defaults.color = axisCol; Chart.defaults.font.family = "Inter, system-ui, sans-serif"; }
+loadForm(); refresh();
+</script>
+</body>
+</html>
