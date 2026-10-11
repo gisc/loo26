@@ -1,0 +1,746 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0"><title>1M65 Inflation Lab</title>
+<style>
+/* Layout: one long page. Header, then five sections. Each section = sticky inputs panel (320px) + results. */
+:root{
+  --bg:#000; --card:#0e1014; --line:#262c37; --input:#161a21; --grid:#1f242d;
+  --fg:#f3f5f8; --mut:#9ba5b4; --gold:#f5c04a; --red:#ff6b5e; --green:#3ddc97;
+  --purple:#b392ff; --blue:#5aa9ff; --teal:#2dd4bf;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums;overflow-x:hidden}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
+h1,h2,h3,p{margin:0}
+/* header */
+.brand{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px}
+.badge{background:var(--gold);color:#000;font-weight:800;border-radius:8px;padding:3px 9px;letter-spacing:.02em}
+h1{font-size:clamp(32px,6vw,60px);line-height:1.05;font-weight:800;margin-top:18px;max-width:18ch;text-wrap:balance}
+h1 em{font-style:normal;color:var(--gold)}
+.sub{color:var(--mut);font-size:clamp(15px,2vw,18px);margin-top:14px;max-width:62ch}
+/* sections */
+section{margin-top:96px;scroll-margin-top:16px}
+.sh{display:flex;gap:14px;align-items:center;margin-bottom:22px;padding-top:26px;border-top:1px solid var(--line)}
+.sh .no{font-size:42px;line-height:1;color:var(--gold)}
+.sh h2{font-size:clamp(24px,3.4vw,34px);font-weight:800}
+.sh p{color:var(--mut);font-size:14px;margin-top:2px}
+.grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:22px;align-items:start}
+.panel{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.insight{margin-top:22px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px 14px 14px 6px;padding:16px 18px}
+.insight b{color:var(--gold)}
+/* controls */
+label.l{display:block;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 7px}
+label.l:first-child{margin-top:0}
+label.l span{color:var(--fg);text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;float:right}
+input[type=number]{width:100%;background:var(--input);border:1px solid var(--line);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit}
+input[type=number]:disabled{opacity:.6}
+input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--gold);margin:4px 0}
+.btns{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.b{background:var(--input);border:1px solid var(--line);color:var(--fg);border-radius:999px;padding:7px 13px;font-size:14px;cursor:pointer;font-family:inherit}
+.b:hover{border-color:var(--mut)}
+.b.on{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg .b{border-radius:10px;text-align:center;padding:9px 8px;line-height:1.2}
+.note{color:var(--mut);font-size:13px;margin-top:8px}
+.chk{display:flex;gap:9px;align-items:flex-start;margin-top:18px;font-size:14px;cursor:pointer}
+.chk input{accent-color:var(--purple);margin-top:3px;width:17px;height:17px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:baseline}
+/* results */
+.hl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.hl .k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.hl .big{font-size:clamp(22px,3.2vw,32px);font-weight:800;line-height:1.2;margin-top:6px;text-wrap:balance}
+.hl .small{color:var(--mut);margin-top:8px;font-size:14px}
+.gold{color:var(--gold)} .red{color:var(--red)} .green{color:var(--green)} .purple{color:var(--purple)} .blue{color:var(--blue)} .mut{color:var(--mut)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+.stat{background:var(--input);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.stat .v{font-size:22px;font-weight:800;margin-top:3px;overflow-wrap:anywhere}
+.stat .t{color:var(--mut);font-size:12px}
+.title{font-weight:700;margin-bottom:12px}
+canvas.chart{display:block;width:100%;height:330px;touch-action:pan-y;cursor:crosshair}
+.scroll{overflow-x:auto}
+table{border-collapse:separate;border-spacing:4px;width:100%}
+th{color:var(--mut);font-size:12px;font-weight:600;text-align:center;padding:4px}
+th:first-child,td:first-child{text-align:left}
+td.rl{color:var(--mut);font-size:13px;white-space:nowrap;padding-right:6px}
+.cell{width:100%;min-width:84px;border:2px solid transparent;border-radius:9px;padding:8px 6px;color:#fff;font-family:inherit;cursor:pointer;text-align:center}
+.cell b{display:block;font-size:15px}
+.cell small{display:block;font-size:11px;opacity:.85}
+.cell.sel{border-color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.chip{background:var(--input);border:1px solid var(--line);color:var(--fg);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;font-family:inherit}
+.chip.on{border-color:#fff;font-weight:700}
+/* section 2 */
+.cats{display:grid;gap:8px}
+.catrow{display:grid;grid-template-columns:minmax(120px,1.3fr) minmax(90px,2fr) 62px 62px 72px;gap:10px;align-items:center}
+.catrow.h{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.catrow input[type=number]{padding:7px 8px;font-size:15px}
+.catrow .c{text-align:right;color:var(--purple);font-weight:700;font-size:14px}
+.warn{color:var(--gold);font-size:13px;margin-top:10px}
+.pirbig{font-size:clamp(46px,9vw,76px);font-weight:800;color:var(--purple);line-height:1}
+/* section 3 */
+.yearbig{font-size:clamp(64px,10vw,96px);font-weight:800;color:var(--gold);line-height:1}
+.go{width:100%;background:var(--gold);color:#000;border:0;border-radius:12px;padding:12px;font-weight:800;font-size:16px;cursor:pointer;margin-top:14px;font-family:inherit}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.item{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.item .x{position:absolute;top:10px;right:10px;background:rgba(255,107,94,.16);color:var(--red);font-weight:800;font-size:12px;border-radius:999px;padding:3px 9px}
+.item .em{font-size:30px;line-height:1}
+.item .nm{font-weight:700;margin-top:8px;padding-right:30px}
+.item .ct{color:var(--mut);font-size:12px}
+.item .td{color:var(--mut);font-size:13px;margin-top:8px}
+.item .fut{color:var(--red);font-size:30px;font-weight:800;line-height:1.1}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.mini div{background:var(--input);border-radius:8px;padding:6px 7px;min-width:0}
+.mini small{display:block;color:var(--mut);font-size:10px}
+.mini b{font-size:13px;overflow-wrap:anywhere}
+details summary{cursor:pointer;color:var(--gold);font-weight:700}
+.edrow{display:grid;grid-template-columns:48px minmax(120px,2fr) 90px minmax(130px,1.4fr) 34px;gap:8px;margin-top:8px;align-items:center}
+.edrow input,.edrow select{width:100%;background:var(--input);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:8px;font-size:15px;font-family:inherit;min-width:0}
+.edrow button.del{background:none;border:1px solid var(--line);color:var(--red);border-radius:8px;font-size:18px;cursor:pointer;height:36px}
+/* section 4 */
+.ret{display:grid;grid-template-columns:20px 1fr 90px;gap:8px;align-items:center;margin-top:8px}
+.ret i{width:12px;height:12px;border-radius:3px;display:block}
+.fin{display:grid;gap:8px}
+.finrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--input);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+.finrow .rk{font-weight:800;color:var(--mut);font-size:18px}
+.tag{display:inline-block;border-radius:999px;font-size:11px;font-weight:700;padding:2px 9px;margin-left:8px;vertical-align:middle}
+.tag.g{background:rgba(61,220,151,.15);color:var(--green)} .tag.r{background:rgba(255,107,94,.15);color:var(--red)}
+.finrow .fv{font-size:20px;font-weight:800;text-align:right}
+/* section 5 */
+.bar{height:12px;background:var(--input);border-radius:99px;overflow:hidden;margin-top:12px;border:1px solid var(--line)}
+.bar i{display:block;height:100%;border-radius:99px}
+.verdict{font-weight:700;margin-top:14px;font-size:17px}
+.sens td.cellw{padding:0}
+.sens .cell{min-width:78px;color:var(--fg)}
+footer{margin-top:80px;padding-top:22px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px;max-width:90ch}
+/* responsive */
+@media (max-width:900px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .panel{position:static;max-height:none;overflow:visible}
+  section{margin-top:72px}
+}
+@media (max-width:620px){
+  .catrow{grid-template-columns:1fr 1fr 62px 62px;grid-template-areas:"n n n n" "s s w r" "c c c c"}
+  .catrow.h{display:none}
+  .catrow .n{grid-area:n;font-weight:700}.catrow .s{grid-area:s}.catrow .w{grid-area:w}.catrow .r{grid-area:r}.catrow .c{grid-area:c;text-align:left}
+  .edrow{grid-template-columns:44px 1fr 80px 34px}
+  .edrow .cs{grid-column:1 / -1;order:5}
+  canvas.chart{height:290px}
+  .sh .no{font-size:34px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="brand"><span class="badge">1M65</span><span>Inflation Lab · Finance Module 4</span></div>
+  <h1>See what inflation does to your money — before it <em>happens.</em></h1>
+  <p class="sub">Five linked tools. Build your own inflation rate, travel forward in time, and find out what your retirement will really cost.</p>
+</header>
+
+<!-- ============ ① INFLATION GRID ============ -->
+<section id="s1">
+  <div class="sh"><span class="no">①</span><div><h2>Inflation Grid</h2><p>Every combination</p></div></div>
+  <div class="grid">
+    <div class="card panel">
+      <label class="l" for="a1">Monthly amount today</label>
+      <input id="a1" type="number" inputmode="decimal" min="0" value="3000">
+      <div class="btns" id="aq1"></div>
+      <label class="l" for="y1">Years from now <span id="yl1"></span></label>
+      <input id="y1" type="range" min="1" max="40" value="20">
+      <div class="btns" id="yq1"></div>
+      <label class="l">Inflation rate a year</label>
+      <div class="btns" id="rb1"></div>
+      <label class="l">Show me</label>
+      <div class="seg" id="mode1"><button class="b on" data-m="worth">What it will be worth</button><button class="b" data-m="cost">What it will cost</button></div>
+      <p class="note" id="modenote"></p>
+      <label class="chk"><input type="checkbox" id="pir1"><span id="pirlbl"></span></label>
+    </div>
+    <div class="col">
+      <div class="hl" id="h1"></div>
+      <div class="card"><div class="title" id="hmt1"></div><div class="scroll" id="hm1"></div></div>
+      <div class="card"><div class="title" id="ct1"></div><canvas class="chart" id="c1"></canvas><div class="legend" id="leg1"></div></div>
+    </div>
+  </div>
+  <div class="insight"><b>1M65 Insight:</b> Idle cash is a guaranteed loss of lifestyle. Time is the enemy of money that sits still — and the friend of money that is invested.</div>
+</section>
+
+<!-- ============ ② MY INFLATION RATE ============ -->
+<section id="s2">
+  <div class="sh"><span class="no">②</span><div><h2>My Inflation Rate</h2><p>Personal basket</p></div></div>
+  <div class="grid">
+    <div class="card panel">
+      <label class="l">Who are you most like?</label>
+      <div class="btns" id="prof"></div>
+      <p class="note">Each button resets the weights below. You can still edit any number.</p>
+      <label class="l" for="h2">Headline inflation to compare (%)</label>
+      <input id="h2" type="number" inputmode="decimal" step="0.1" min="0" value="2.5">
+      <label class="l" for="sp2">Monthly spend today</label>
+      <input id="sp2" type="number" inputmode="decimal" min="0" value="5000">
+      <label class="l" for="y2">Years from now <span id="yl2"></span></label>
+      <input id="y2" type="range" min="1" max="40" value="20">
+    </div>
+    <div class="col">
+      <div class="card">
+        <p>Headline inflation is an average across everyone. Your own rate depends on what you spend on: if healthcare and school fees take a big share of your budget, your prices rise faster than the headline.</p>
+        <p class="note">Weight = share of your spending (%). Rate = how fast you assume that category's prices rise each year.</p>
+        <div class="cats" id="cats" style="margin-top:14px"></div>
+        <p class="warn" id="warn2" hidden></p>
+      </div>
+      <div class="hl" id="h2o"></div>
+      <div class="card"><div class="title">What drives your inflation</div><canvas class="chart" id="cb2" style="cursor:default"></canvas></div>
+      <div class="card"><div class="title" id="ct2"></div><canvas class="chart" id="c2"></canvas></div>
+    </div>
+  </div>
+  <div class="insight"><b>1M65 Insight:</b> Your inflation rate is personal. Plan with your own number, not the headline.</div>
+</section>
+
+<!-- ============ ③ PRICE TIME MACHINE ============ -->
+<section id="s3">
+  <div class="sh"><span class="no">③</span><div><h2>Price Time Machine</h2><p>Everyday prices</p></div></div>
+  <div class="grid">
+    <div class="card panel">
+      <div class="yearbig" id="big3"></div>
+      <div class="mut" id="sub3" style="margin-top:4px"></div>
+      <label class="l" for="y3" style="margin-top:18px">Years from today <span id="yl3"></span></label>
+      <input id="y3" type="range" min="1" max="40" value="20">
+      <button class="go" id="go3">▶ Travel through time</button>
+      <label class="l">Which inflation rate?</label>
+      <div class="seg" id="mode3"><button class="b on" data-m="cat">Category rates (section ②)</button><button class="b" data-m="one">One rate</button></div>
+      <div class="btns" id="rb3" hidden></div>
+    </div>
+    <div class="col">
+      <div class="hl" id="h3"></div>
+      <div class="items" id="grid3"></div>
+      <p class="note">Prices are illustrative Singapore examples, not quotes from any shop or provider.</p>
+      <details class="card" id="edit3">
+        <summary>✏ Edit prices or add your own items</summary>
+        <div id="ed3" style="margin-top:10px"></div>
+        <button class="b" id="add3" style="margin-top:12px">+ Add item</button>
+      </details>
+    </div>
+  </div>
+  <div class="insight"><b>1M65 Insight:</b> Prices rarely go backwards. Every year you delay investing, the finish line moves further away.</div>
+</section>
+
+<!-- ============ ④ MONEY RACE ============ -->
+<section id="s4">
+  <div class="sh"><span class="no">④</span><div><h2>Money Race</h2><p>Cash vs CPF vs equities</p></div></div>
+  <div class="grid">
+    <div class="card panel">
+      <label class="l" for="a4">Starting amount</label>
+      <input id="a4" type="number" inputmode="decimal" min="0" value="100000">
+      <label class="l" for="y4">Years <span id="yl4"></span></label>
+      <input id="y4" type="range" min="5" max="40" value="30">
+      <label class="l" for="i4">Inflation a year (%)</label>
+      <input id="i4" type="number" inputmode="decimal" step="0.1" min="0" value="3">
+      <label class="l">Yearly returns (%)</label>
+      <div id="rets"></div>
+      <label class="l">Show values in</label>
+      <div class="seg" id="mode4"><button class="b on" data-m="today">Today's dollars</button><button class="b" data-m="future">Future dollars</button></div>
+      <p class="note" id="note4"></p>
+    </div>
+    <div class="col">
+      <div class="hl" id="h4"></div>
+      <div class="card"><div class="title">Finish line</div><div class="fin" id="fin4"></div></div>
+      <div class="card"><div class="title" id="ct4"></div><canvas class="chart" id="c4"></canvas></div>
+      <p class="note">* Equity return is a long-run historical average, not a guarantee. Real-world returns swing sharply from year to year, including large falls. CPF rates shown are illustrative; check CPF Board for current rates.</p>
+    </div>
+  </div>
+  <div class="insight"><b>1M65 Insight:</b> "Safe" money that loses to inflation is not safe. It is slow erosion.</div>
+</section>
+
+<!-- ============ ⑤ RETIREMENT NUMBER ============ -->
+<section id="s5">
+  <div class="sh"><span class="no">⑤</span><div><h2>Retirement Number</h2><p>What you need at 65</p></div></div>
+  <div class="grid">
+    <div class="card panel">
+      <label class="l" for="age5">Current age</label>
+      <input id="age5" type="number" inputmode="numeric" min="18" max="90" value="40">
+      <label class="l" for="ret5">Retirement age</label>
+      <input id="ret5" type="number" inputmode="numeric" min="40" max="90" value="65">
+      <label class="l" for="sp5">Monthly spending today</label>
+      <input id="sp5" type="number" inputmode="decimal" min="0" value="4000">
+      <label class="l" for="i5">Inflation a year (%)</label>
+      <input id="i5" type="number" inputmode="decimal" step="0.1" min="0" value="3">
+      <label class="chk" style="margin-top:10px"><input type="checkbox" id="pir5"><span id="pir5l">Use my Personal Inflation Rate</span></label>
+      <label class="l" for="cpf5">CPF LIFE monthly payout at retirement</label>
+      <input id="cpf5" type="number" inputmode="decimal" min="0" value="1800">
+      <p class="note">Get your real figure from the official CPF LIFE Estimator.</p>
+      <label class="l">CPF LIFE plan</label>
+      <div class="seg" id="plan5"><button class="b on" data-m="std">Standard (flat)</button><button class="b" data-m="esc">Escalating (+2% a year)</button></div>
+      <label class="l" for="wr5">Withdrawal rate <span id="wrl5"></span></label>
+      <input id="wr5" type="range" min="3" max="5" step="0.25" value="4">
+      <p class="note">The share of your investment pot you draw each year. Lower is safer but needs a bigger pot.</p>
+      <label class="l" for="t5">Target amount</label>
+      <input id="t5" type="number" inputmode="decimal" min="0" value="1000000">
+    </div>
+    <div class="col">
+      <div class="hl" id="h5"></div>
+      <div class="card"><div class="title">Retirement spending vs CPF LIFE, per month</div><p class="note" style="margin:-6px 0 10px">The shaded gap is what your own investments must cover each month.</p><canvas class="chart" id="c5"></canvas></div>
+      <div class="card"><div class="title">Pot needed: inflation vs withdrawal rate</div><div class="scroll sens" id="sens5"></div><p class="note">Green: within your target. Red: above your target. White outline: your current settings.</p></div>
+    </div>
+  </div>
+  <div class="insight"><b>1M65 Insight:</b> For many Singaporeans, $1M at 65 is not a luxury target. It is the floor.</div>
+</section>
+
+<footer>This tool is for financial education only and is not financial advice. All inflation rates, prices and returns are illustrative assumptions, not forecasts. Past returns do not guarantee future results. CPF figures change over time — always verify with official CPF Board sources. No specific product is recommended. © 1M65 Movement.</footer>
+</div>
+
+<script>
+/* ===================== 1. HELPERS ===================== */
+const $ = id => document.getElementById(id);
+const YEAR = new Date().getFullYear();
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const money = v => (v < 0 ? "-$" : "$") + Math.round(Math.abs(v)).toLocaleString("en-US");
+const price = v => Math.abs(v) < 100 ? "$" + v.toFixed(2) : money(v);
+const trim = (n, d) => String(parseFloat(n.toFixed(d)));
+function short(v) {                       // axis labels: $5.0k, $25k, $1.97M
+  if (v >= 1e6) return "$" + trim(v / 1e6, 2) + "M";
+  if (v >= 1e3) { const k = v / 1e3; return "$" + (k < 10 ? k.toFixed(1) : Number.isInteger(k) ? k : k.toFixed(1)) + "k"; }
+  return "$" + Math.round(v);
+}
+function big(v) {                         // $1.97M, $973k
+  if (v >= 1e6) return "$" + trim(v / 1e6, 2) + "M";
+  if (v >= 1e3) return "$" + Math.round(v / 1e3) + "k";
+  return money(v);
+}
+const pct = (v, d = 2) => v.toFixed(d) + "%";
+function rd(id, def = 0, min = null, max = null) {   // read a number box safely (blank -> 0, never NaN)
+  let v = parseFloat($(id).value);
+  if (!isFinite(v)) v = def;
+  if (min !== null) v = Math.max(min, v);
+  if (max !== null) v = Math.min(max, v);
+  return v;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* ===================== 2. STATE ===================== */
+const CATNAMES = ["Food & hawker", "Housing & utilities", "Transport", "Healthcare & insurance", "Education & children", "Leisure & travel", "Others / household"];
+const CATKEYS = ["food", "housing", "transport", "healthcare", "education", "leisure", "others"];
+const PROFILES = { "Young single": [28, 22, 15, 5, 0, 20, 10], "Family with kids": [22, 20, 12, 10, 12, 12, 12], "Retiree": [25, 18, 8, 25, 0, 14, 10] };
+const S = {
+  a1: 3000, y1: 20, sel1: 3, mode1: "worth", pir1: false,
+  cats: [[22, 3], [20, 2.5], [12, 2], [10, 5], [12, 4], [12, 3], [12, 2]].map(([w, r]) => ({ w, r })),
+  prof: "Family with kids", head: 2.5, sp2: 5000, y2: 20,
+  y3: 20, mode3: "cat", r3: 3, trav: false,
+  items: [
+    ["🍗", "Chicken rice (hawker)", 5, 0], ["☕", "Kopi", 1.6, 0], ["🧋", "Bubble tea", 5.5, 0],
+    ["🍽️", "Family dinner, 4 pax", 120, 0], ["🛒", "Monthly groceries (family)", 800, 0],
+    ["💡", "Monthly utilities (HDB)", 150, 1], ["🚇", "MRT / bus trip", 1.5, 2], ["🚗", "Ride-hail, 10 km", 18, 2],
+    ["🩺", "GP consultation", 40, 3], ["🏥", "Hospital stay (per day)", 500, 3],
+    ["📚", "Tuition (monthly, 1 subject)", 300, 4], ["✈️", "Bangkok holiday (per person)", 1200, 5]
+  ].map(([e, n, p, c]) => ({ e, n, p, c })),
+  a4: 100000, y4: 30, i4: 3, mode4: "today",
+  rets: [{ n: "Bank savings", r: 0.5, c: "#ff6b5e" }, { n: "CPF OA", r: 2.5, c: "#5aa9ff" }, { n: "CPF SA / RA", r: 4, c: "#2dd4bf" }, { n: "Global equities*", r: 7, c: "#f5c04a" }],
+  age: 40, ret: 65, sp5: 4000, i5: 3, pir5: false, cpf: 1800, plan: "std", wr: 4, t5: 1000000
+};
+
+/* ===================== 3. THE MATHS ===================== */
+function pirRate() {                      // Personal Inflation Rate = sum(weight x rate) / sum(weights), in %
+  const sw = S.cats.reduce((a, c) => a + c.w, 0);
+  return sw > 0 ? S.cats.reduce((a, c) => a + c.w * c.r, 0) / sw : S.head;
+}
+const grow = (r, n) => Math.pow(1 + r / 100, n);                 // r in %
+const worthOf = (A, r, n) => A / grow(r, n);                     // what it will be worth (purchasing power)
+const costOf = (A, r, n) => A * grow(r, n);                      // what it will cost
+const doubling = r => r > 0 ? Math.log(2) / Math.log(1 + r / 100) : Infinity;
+const finalFuture = (A, r, n) => A * grow(r, n);
+const finalToday = (A, r, i, n) => A * Math.pow((1 + r / 100) / (1 + i / 100), n);
+const realRet = (r, i) => ((1 + r / 100) / (1 + i / 100) - 1) * 100;
+
+/* ===================== 4. SHARED CHART ENGINE ===================== */
+const charts = [];
+function niceStep(raw) {
+  if (!(raw > 0)) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+}
+function rrect(c, x, y, w, h, r) {
+  c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function sizeCanvas(cv, W, H, dpr) {
+  const w = Math.round(W * dpr), h = Math.round(H * dpr);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+}
+/* o = { xs, lines:[{name,color,w,alpha,dash,y[]}], xLabel(x), xTip(x), tipFmt, hRef:{y,label}, marker:{x, lines:[idx]}, shade:{a,b,color} } */
+function drawChart(cv, o) {
+  cv._o = o;
+  if (!charts.includes(cv)) { charts.push(cv); wire(cv); }
+  paint(cv);
+}
+function wire(cv) {
+  const mv = e => { const r = cv.getBoundingClientRect(); cv._hx = e.clientX - r.left; paint(cv); };
+  cv.addEventListener("pointermove", mv);
+  cv.addEventListener("pointerdown", mv);
+  cv.addEventListener("pointerleave", () => { cv._hx = null; paint(cv); });
+  cv.addEventListener("pointercancel", () => { cv._hx = null; paint(cv); });
+  if (window.ResizeObserver) new ResizeObserver(() => paint(cv)).observe(cv);
+}
+function paint(cv) {
+  const o = cv._o; if (!o) return;
+  const dpr = window.devicePixelRatio || 1;
+  if (o.type === "bars") return paintBars(cv, o, dpr);
+  const W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+  sizeCanvas(cv, W, H, dpr);
+  const c = cv.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  const m = { l: W < 420 ? 46 : 54, r: 14, t: 18, b: 28 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const xs = o.xs, x0 = xs[0], x1 = xs[xs.length - 1];
+  let ymax = 0;
+  o.lines.forEach(l => l.y.forEach(v => { if (v > ymax) ymax = v; }));
+  if (o.hRef && o.hRef.y > ymax) ymax = o.hRef.y;
+  if (!(ymax > 0)) ymax = 1;
+  const step = niceStep(ymax * 1.04 / 4), top = Math.ceil(ymax * 1.04 / step - 1e-9) * step;
+  const X = v => m.l + (v - x0) / ((x1 - x0) || 1) * pw, Y = v => m.t + ph * (1 - v / top);
+  c.font = "11px system-ui,sans-serif";
+  // y gridlines and labels
+  c.textAlign = "right"; c.textBaseline = "middle";
+  for (let v = 0; v <= top + step * 0.01; v += step) {
+    c.strokeStyle = "#1f242d"; c.lineWidth = 1; c.setLineDash([]);
+    c.beginPath(); c.moveTo(m.l, Math.round(Y(v)) + .5); c.lineTo(W - m.r, Math.round(Y(v)) + .5); c.stroke();
+    c.fillStyle = "#9ba5b4"; c.fillText(short(v), m.l - 7, Y(v));
+  }
+  // x labels spaced so they never overlap
+  const maxL = Math.max(2, Math.floor(pw / 56)), span = x1 - x0;
+  let st = 1; for (const s of [1, 2, 5, 10, 20, 25, 50]) { st = s; if (span / s + 1 <= maxL) break; }
+  c.textAlign = "center"; c.textBaseline = "top"; c.fillStyle = "#9ba5b4";
+  for (let v = x0; v <= x1 + 1e-9; v += st) c.fillText(o.xLabel ? o.xLabel(v) : String(v), X(v), H - m.b + 8);
+  // shaded area between two lines
+  if (o.shade) {
+    const a = o.lines[o.shade.a].y, b = o.lines[o.shade.b].y;
+    c.beginPath(); xs.forEach((x, i) => i ? c.lineTo(X(x), Y(a[i])) : c.moveTo(X(x), Y(a[i])));
+    for (let i = xs.length - 1; i >= 0; i--) c.lineTo(X(xs[i]), Y(b[i]));
+    c.closePath(); c.fillStyle = o.shade.color; c.fill();
+  }
+  // dashed horizontal reference
+  if (o.hRef) {
+    c.strokeStyle = "#9ba5b4"; c.lineWidth = 1; c.setLineDash([5, 4]);
+    c.beginPath(); c.moveTo(m.l, Y(o.hRef.y)); c.lineTo(W - m.r, Y(o.hRef.y)); c.stroke(); c.setLineDash([]);
+    c.fillStyle = "#9ba5b4"; c.textAlign = "left"; c.textBaseline = "bottom";
+    c.fillText(o.hRef.label, m.l + 6, Y(o.hRef.y) - 4);
+  }
+  // lines
+  o.lines.forEach(l => {
+    c.save(); c.globalAlpha = l.alpha == null ? 1 : l.alpha; c.strokeStyle = l.color; c.lineWidth = l.w || 2;
+    c.lineJoin = "round"; c.lineCap = "round"; c.setLineDash(l.dash ? [7, 5] : []);
+    c.beginPath(); xs.forEach((x, i) => i ? c.lineTo(X(x), Y(l.y[i])) : c.moveTo(X(x), Y(l.y[i]))); c.stroke(); c.restore();
+  });
+  const dot = (x, y, col) => { c.beginPath(); c.arc(x, y, 4.5, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = "#000"; c.stroke(); };
+  // dashed vertical marker with dots
+  if (o.marker) {
+    const i = clamp(Math.round((o.marker.x - x0) / (span || 1) * (xs.length - 1)), 0, xs.length - 1), mx = X(xs[i]);
+    c.strokeStyle = "#f5c04a"; c.lineWidth = 1.2; c.setLineDash([5, 4]);
+    c.beginPath(); c.moveTo(mx, m.t); c.lineTo(mx, H - m.b); c.stroke(); c.setLineDash([]);
+    (o.marker.lines || []).forEach(k => dot(mx, Y(o.lines[k].y[i]), o.lines[k].color));
+  }
+  // hover: guide line + tooltip
+  if (cv._hx != null && cv._hx >= m.l - 4 && cv._hx <= m.l + pw + 4 && o.lines.length) {
+    const i = clamp(Math.round((cv._hx - m.l) / pw * (xs.length - 1)), 0, xs.length - 1), gx = X(xs[i]);
+    c.strokeStyle = "rgba(243,245,248,.4)"; c.lineWidth = 1; c.beginPath(); c.moveTo(gx, m.t); c.lineTo(gx, H - m.b); c.stroke();
+    o.lines.forEach(l => dot(gx, Y(l.y[i]), l.color));
+    const f = o.tipFmt || money, title = o.xTip ? o.xTip(xs[i]) : String(xs[i]);
+    const rows = o.lines.map(l => ({ n: l.name, t: f(l.y[i]), v: l.y[i], c: l.color })).sort((a, b) => b.v - a.v);
+    c.font = "600 12px system-ui,sans-serif"; let w = c.measureText(title).width;
+    c.font = "12px system-ui,sans-serif";
+    rows.forEach(r => { r.nw = c.measureText(r.n).width; r.vw = c.measureText(r.t).width; w = Math.max(w, 16 + r.nw + 18 + r.vw); });
+    const bw = Math.min(W - 8, w + 22), bh = 30 + rows.length * 18;
+    let bx = gx + 12; if (bx + bw > W - 4) bx = gx - 12 - bw; bx = Math.max(4, bx);
+    const by = Math.max(4, Math.min(m.t + 2, H - bh - 4));
+    rrect(c, bx, by, bw, bh, 8); c.fillStyle = "rgba(8,10,14,.96)"; c.fill(); c.strokeStyle = "#3a4150"; c.lineWidth = 1; c.stroke();
+    c.textAlign = "left"; c.textBaseline = "middle"; c.fillStyle = "#f3f5f8"; c.font = "600 12px system-ui,sans-serif";
+    c.fillText(title, bx + 11, by + 15);
+    c.font = "12px system-ui,sans-serif";
+    rows.forEach((r, k) => {
+      const ry = by + 33 + k * 18;
+      c.fillStyle = r.c; c.fillRect(bx + 11, ry - 5, 10, 10);
+      c.fillStyle = "#9ba5b4"; c.fillText(r.n, bx + 26, ry);
+      c.fillStyle = "#f3f5f8"; c.textAlign = "right"; c.fillText(r.t, bx + bw - 11, ry); c.textAlign = "left";
+    });
+  }
+}
+function paintBars(cv, o, dpr) {          // horizontal bar chart (section 2)
+  const rowH = 34, H = o.items.length * rowH + 8; cv.style.height = H + "px";
+  const W = cv.clientWidth; if (!W) return;
+  sizeCanvas(cv, W, H, dpr);
+  const c = cv.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+  const lw = W < 420 ? 108 : 168, vw = 64, max = Math.max(...o.items.map(i => i.v), 0.0001);
+  c.font = "13px system-ui,sans-serif"; c.textBaseline = "middle";
+  o.items.forEach((it, k) => {
+    const y = 4 + k * rowH + rowH / 2, bw = Math.max(2, (W - lw - vw) * it.v / max);
+    c.fillStyle = "#9ba5b4"; c.textAlign = "left";
+    let t = it.label; while (c.measureText(t).width > lw - 10 && t.length > 4) t = t.slice(0, -2);
+    c.fillText(t === it.label ? t : t + "…", 0, y);
+    rrect(c, lw, y - 9, bw, 18, 5); c.fillStyle = "#b392ff"; c.fill();
+    c.fillStyle = "#f3f5f8"; c.fillText(it.t, lw + bw + 8, y);
+  });
+}
+window.addEventListener("resize", () => charts.forEach(paint));
+
+/* ===================== 5. SMALL UI HELPERS ===================== */
+function quick(id, vals, label, pick) {
+  const box = $(id);
+  vals.forEach(v => { const b = document.createElement("button"); b.className = "b"; b.dataset.v = v; b.textContent = label(v); b.onclick = () => pick(v); box.appendChild(b); });
+}
+const setOn = (id, val) => $(id).querySelectorAll("button").forEach(b => b.classList.toggle("on", Number(b.dataset.v) === Number(val)));
+function seg(id, key, after) {
+  $(id).querySelectorAll("button").forEach(b => b.onclick = () => { S[key] = b.dataset.m; after && after(); renderAll(); });
+}
+const segOn = (id, val) => $(id).querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.m === val));
+const stat = (t, v, cls = "") => `<div class="stat"><div class="t">${t}</div><div class="v ${cls}">${v}</div></div>`;
+const yearsTxt = n => `${n} year${n === 1 ? "" : "s"} (in ${YEAR + n})`;
+
+/* ===================== 6. SECTION ① INFLATION GRID ===================== */
+const RATES = [2, 2.5, 3, 3.5, 4, 4.5, 5];
+const RCOL = { 2: "#3ddc97", 2.5: "#8be06a", 3: "#d4e157", 3.5: "#f5c04a", 4: "#ff9f43", 4.5: "#ff6b5e", 5: "#ff3b6b" };
+function heat(t) {                        // 0 = small impact (dark amber) ... 1 = big impact (bright red)
+  const u = clamp(t / 0.8, 0, 1), A = [74, 52, 12], B = [190, 96, 18], C = [232, 48, 44];
+  const [p, q, k] = u < .5 ? [A, B, u * 2] : [B, C, (u - .5) * 2];
+  return `rgb(${p.map((x, i) => Math.round(x + (q[i] - x) * k)).join(",")})`;
+}
+function render1() {
+  const A = S.a1, n = S.y1, pr = pirRate(), worth = S.mode1 === "worth";
+  if (S.sel1 === "pir" && !S.pir1) S.sel1 = 3;
+  const r = S.sel1 === "pir" ? pr : S.sel1, rl = S.sel1 === "pir" ? "my rate " + pct(pr) : pct(r, r % 1 ? 1 : 0);
+  $("yl1").textContent = yearsTxt(n);
+  $("pirlbl").textContent = `Add my Personal Inflation Rate (${pct(pr)})`;
+  $("modenote").textContent = worth ? "Worth: what that money can still buy, measured in today's prices." : "Cost: how much you will need then to buy what that money buys today.";
+  const w = worthOf(A, r, n), c = costOf(A, r, n), lost = 1 - w / (A || 1);
+  const wP = worthOf(A, pr, n), cP = costOf(A, pr, n);
+  if (worth) {
+    $("h1").innerHTML = `<div class="k">What it will be worth · ${rl} inflation</div><div class="big">${money(A)} in ${YEAR + n} will only buy what <span class="red">${money(w)}</span> buys today</div><div class="small">That is ${n} year${n === 1 ? "" : "s"} of prices rising about ${rl} a year.</div>
+      <div class="stats">${stat("Purchasing power lost", pct(lost * 100, 1), "red")}${stat("Cents per $1", Math.round((A ? w / A : 0) * 100) + "¢", "gold")}${stat("Value lost per month", money(A - w), "red")}${S.pir1 ? stat(`At my rate (${pct(pr)})`, money(wP), "purple") : ""}</div>`;
+  } else {
+    $("h1").innerHTML = `<div class="k">What it will cost · ${rl} inflation</div><div class="big">${money(A)} a month today will cost <span class="red">${money(c)}</span> a month</div><div class="small">In ${YEAR + n}, for the same things, at about ${rl} a year.</div>
+      <div class="stats">${stat("Yearly cost then", money(c * 12), "red")}${stat("Extra needed every month", money(c - A), "red")}${stat("Prices double every", isFinite(doubling(r)) ? trim(doubling(r), 1) + " yrs" : "never", "gold")}${S.pir1 ? stat(`At my rate (${pct(pr)})`, money(cP), "purple") : ""}</div>`;
+  }
+  // heat map
+  const cols = [...new Set([10, 20, 30, n])].sort((a, b) => a - b);
+  const rows = RATES.map(x => ({ key: x, label: pct(x, x % 1 ? 1 : 0), r: x }));
+  if (S.pir1) rows.push({ key: "pir", label: "My rate " + pct(pr), r: pr, purple: true });
+  $("hmt1").textContent = worth ? "What it will be worth: tap a cell to pick a rate and a year" : "What it will cost: tap a cell to pick a rate and a year";
+  let h = `<table><thead><tr><th>Inflation</th>${cols.map(y => `<th>${y} yrs · ${YEAR + y}</th>`).join("")}</tr></thead><tbody>`;
+  rows.forEach(row => {
+    h += `<tr><td class="rl ${row.purple ? "purple" : ""}">${row.label}</td>`;
+    cols.forEach(y => {
+      const g = grow(row.r, y), val = worth ? A / g : A * g, t = 1 - 1 / g, sel = row.key === S.sel1 && y === n;
+      h += `<td><button class="cell ${sel ? "sel" : ""}" data-r="${row.key}" data-y="${y}" style="background:${heat(t)}"><b>${money(val)}</b><small>${worth ? Math.round(100 / g) + "¢ per $1" : "×" + g.toFixed(2)}</small></button></td>`;
+    });
+    h += "</tr>";
+  });
+  $("hm1").innerHTML = h + "</tbody></table>";
+  $("hm1").querySelectorAll(".cell").forEach(b => b.onclick = () => {
+    S.sel1 = b.dataset.r === "pir" ? "pir" : Number(b.dataset.r); S.y1 = Number(b.dataset.y);
+    $("y1").value = S.y1; renderAll();
+  });
+  // chart
+  const xs = Array.from({ length: 41 }, (_, i) => i);
+  const mk = (key, name, rate, color, dash) => {
+    const sel = key === S.sel1;
+    return { key, name, color, dash, w: sel ? 3.6 : 1.5, alpha: sel ? 1 : .42, y: xs.map(t => worth ? worthOf(A, rate, t) : costOf(A, rate, t)) };
+  };
+  let lines = RATES.map(x => mk(x, pct(x, x % 1 ? 1 : 0), x, RCOL[x]));
+  if (S.pir1) lines.push({ ...mk("pir", "My rate " + pct(pr), pr, "#b392ff", true), w: S.sel1 === "pir" ? 3.6 : 2.2, alpha: S.sel1 === "pir" ? 1 : .8 });
+  lines = lines.filter(l => l.key !== S.sel1).concat(lines.filter(l => l.key === S.sel1));
+  $("ct1").textContent = worth ? "What your money buys over time (in today's prices)" : "What the same lifestyle costs over time";
+  drawChart($("c1"), {
+    xs, lines, xLabel: v => v === 0 ? "Now" : v + "y", xTip: v => v === 0 ? `Today (${YEAR})` : `In ${YEAR + v} (+${v} yrs)`,
+    hRef: { y: A, label: "Today: " + money(A) }, marker: { x: n, lines: [lines.length - 1] }
+  });
+  $("leg1").innerHTML = RATES.map(x => `<button class="chip ${x === S.sel1 ? "on" : ""}" data-r="${x}"><span class="dot" style="background:${RCOL[x]}"></span>${pct(x, x % 1 ? 1 : 0)}</button>`).join("") +
+    (S.pir1 ? `<button class="chip ${S.sel1 === "pir" ? "on" : ""}" data-r="pir"><span class="dot" style="background:#b392ff"></span>My rate ${pct(pr)}</button>` : "");
+  $("leg1").querySelectorAll(".chip").forEach(b => b.onclick = () => { S.sel1 = b.dataset.r === "pir" ? "pir" : Number(b.dataset.r); renderAll(); });
+  setOn("aq1", A); setOn("yq1", n); setOn("rb1", S.sel1 === "pir" ? -1 : S.sel1); segOn("mode1", S.mode1);
+}
+
+/* ===================== 7. SECTION ② MY INFLATION RATE ===================== */
+function buildCats() {
+  let h = `<div class="catrow h"><span>Category</span><span>Weight (%)</span><span></span><span>Rate (%)</span><span style="text-align:right">Adds</span></div>`;
+  CATNAMES.forEach((n, i) => {
+    h += `<div class="catrow"><span class="n">${n}</span><input class="s" type="range" min="0" max="50" id="cs${i}" aria-label="${n} weight"><input class="w" type="number" min="0" max="100" id="cw${i}" aria-label="${n} weight number"><input class="r" type="number" step="0.1" min="0" id="cr${i}" aria-label="${n} yearly inflation"><span class="c" id="cc${i}"></span></div>`;
+  });
+  $("cats").innerHTML = h;
+  S.cats.forEach((c, i) => {
+    $("cs" + i).oninput = () => { c.w = +$("cs" + i).value; $("cw" + i).value = c.w; S.prof = ""; renderAll(); };
+    $("cw" + i).oninput = () => { c.w = clamp(rd("cw" + i), 0, 100); $("cs" + i).value = c.w; S.prof = ""; renderAll(); };
+    $("cr" + i).oninput = () => { c.r = rd("cr" + i, 0, 0, 100); renderAll(); };
+  });
+  syncCats();
+  Object.keys(PROFILES).forEach(k => {
+    const b = document.createElement("button"); b.className = "b"; b.textContent = k; b.dataset.k = k;
+    b.onclick = () => { PROFILES[k].forEach((w, i) => S.cats[i].w = w); S.prof = k; syncCats(); renderAll(); };
+    $("prof").appendChild(b);
+  });
+}
+function syncCats() { S.cats.forEach((c, i) => { $("cs" + i).value = c.w; $("cw" + i).value = c.w; $("cr" + i).value = c.r; }); }
+function render2() {
+  const pr = pirRate(), sw = S.cats.reduce((a, c) => a + c.w, 0), n = S.y2, hd = S.head, sp = S.sp2;
+  $("yl2").textContent = yearsTxt(n);
+  $("prof").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.k === S.prof));
+  S.cats.forEach((c, i) => $("cc" + i).textContent = sw > 0 ? (c.w * c.r / sw).toFixed(2) + " pts" : "–");
+  const wn = $("warn2"); wn.hidden = sw === 100 || sw === 0;
+  wn.textContent = `Your weights add up to ${trim(sw, 1)}%, not 100%. That is fine: they are scaled automatically.`;
+  const diff = pr - hd, dc = Math.abs(diff) < 0.005 ? "mut" : diff > 0 ? "red" : "green";
+  const atMine = costOf(sp, pr, n), atHead = costOf(sp, hd, n);
+  $("h2o").innerHTML = `<div class="k">My Personal Inflation Rate</div><div class="pirbig">${pct(pr)}</div>
+    <div class="big ${dc}" style="font-size:20px;margin-top:8px">${diff >= 0 ? "+" : "−"}${Math.abs(diff).toFixed(2)} pts <span class="mut" style="font-weight:600">vs headline ${pct(hd, hd % 1 ? 1 : 0)}</span></div>
+    <div class="stats">${stat(`Monthly spend in ${YEAR + n}, my rate`, money(atMine), "purple")}${stat("At the headline rate", money(atHead))}${stat("Hidden gap per month", money(atMine - atHead), "red")}</div>`;
+  const items = S.cats.map((c, i) => ({ label: CATNAMES[i], v: sw > 0 ? c.w * c.r / sw : 0 })).sort((a, b) => b.v - a.v).map(x => ({ ...x, t: x.v.toFixed(2) + " pts" }));
+  drawChart($("cb2"), { type: "bars", items });
+  const xs = Array.from({ length: 41 }, (_, i) => i);
+  $("ct2").textContent = `Monthly spend of ${money(sp)} over time: my rate vs headline`;
+  drawChart($("c2"), {
+    xs, xLabel: v => v === 0 ? "Now" : v + "y", xTip: v => v === 0 ? `Today (${YEAR})` : `In ${YEAR + v} (+${v} yrs)`,
+    lines: [{ name: "My rate " + pct(pr), color: "#b392ff", w: 3.2, y: xs.map(t => costOf(sp, pr, t)) },
+            { name: "Headline " + pct(hd, hd % 1 ? 1 : 0), color: "#9ba5b4", w: 2, dash: true, y: xs.map(t => costOf(sp, hd, t)) }],
+    shade: { a: 0, b: 1, color: "rgba(179,146,255,.14)" }, hRef: { y: sp, label: "Today: " + money(sp) }, marker: { x: n, lines: [0] }
+  });
+}
+
+/* ===================== 8. SECTION ③ PRICE TIME MACHINE ===================== */
+const itemRate = it => S.mode3 === "cat" ? S.cats[it.c].r : S.r3;
+function render3() {
+  const n = S.y3; $("yl3").textContent = n + (n === 1 ? " year" : " years");
+  $("big3").textContent = YEAR + n; $("sub3").textContent = `${n} year${n === 1 ? "" : "s"} from today`;
+  segOn("mode3", S.mode3); $("rb3").hidden = S.mode3 !== "one"; setOn("rb3", S.r3);
+  const it = S.items;
+  if (!it.length) { $("h3").innerHTML = `<div class="big">Add an item below to start.</div>`; $("grid3").innerHTML = ""; return; }
+  const kopi = it.find(x => /kopi/i.test(x.n)) || it[0];
+  let fast = it[0], fm = 0;
+  it.forEach(x => { const m = grow(itemRate(x), n); if (m > fm) { fm = m; fast = x; } });
+  $("h3").innerHTML = `<div class="k">Welcome to ${YEAR + n}</div><div class="big">Your ${esc(kopi.n.toLowerCase())} now costs <span class="red">${price(kopi.p * grow(itemRate(kopi), n))}</span></div><div class="small">It was ${price(kopi.p)} in ${YEAR}.</div>
+    <div class="stats">${stat("Fastest-rising item", `${esc(fast.n)} <span class="red">×${fm.toFixed(2)}</span>`)}${stat("Items", it.length)}${stat("Rate source", S.mode3 === "cat" ? "Category rates" : "One rate · " + pct(S.r3, S.r3 % 1 ? 1 : 0))}</div>`;
+  $("grid3").innerHTML = it.map(x => {
+    const r = itemRate(x), f = p => price(x.p * grow(r, p));
+    return `<div class="item"><span class="x">×${grow(r, n).toFixed(2)}</span><div class="em">${esc(x.e)}</div><div class="nm">${esc(x.n)}</div><div class="ct">${CATKEYS[x.c]} · ${pct(r, r % 1 ? 1 : 0)} a year</div>
+      <div class="td">Today ${price(x.p)}</div><div class="fut">${f(n)}</div>
+      <div class="mini"><div><small>10 yrs</small><b>${f(10)}</b></div><div><small>20 yrs</small><b>${f(20)}</b></div><div><small>30 yrs</small><b>${f(30)}</b></div></div></div>`;
+  }).join("");
+}
+function buildEditor() {
+  $("ed3").innerHTML = S.items.map((x, i) => `<div class="edrow"><input data-i="${i}" data-f="e" value="${esc(x.e)}" aria-label="Emoji"><input data-i="${i}" data-f="n" value="${esc(x.n)}" aria-label="Name"><input data-i="${i}" data-f="p" type="number" step="0.01" min="0" value="${x.p}" aria-label="Price today"><select class="cs" data-i="${i}" data-f="c" aria-label="Category">${CATNAMES.map((c, k) => `<option value="${k}" ${k === x.c ? "selected" : ""}>${c}</option>`).join("")}</select><button class="del" data-del="${i}" aria-label="Delete item">×</button></div>`).join("");
+  $("ed3").querySelectorAll("[data-f]").forEach(el => el.oninput = () => {
+    const x = S.items[+el.dataset.i], f = el.dataset.f;
+    x[f] = f === "p" ? Math.max(0, parseFloat(el.value) || 0) : f === "c" ? +el.value : el.value;
+    renderAll(false);
+  });
+  $("ed3").querySelectorAll("[data-del]").forEach(b => b.onclick = () => { S.items.splice(+b.dataset.del, 1); buildEditor(); renderAll(false); });
+}
+$("add3").onclick = () => { S.items.push({ e: "🛍️", n: "New item", p: 10, c: 6 }); buildEditor(); renderAll(false); };
+$("go3").onclick = () => {                // animate the year forward over about 2 seconds (to at least 10 years)
+  if (S.trav) return;
+  const target = Math.max(S.y3, 10), t0 = performance.now(); S.trav = true;
+  const step = now => {
+    const p = Math.min(1, (now - t0) / 2000), e = 1 - Math.pow(1 - p, 3);
+    S.y3 = Math.max(1, Math.round(target * e)); $("y3").value = S.y3; render3();
+    if (p < 1) requestAnimationFrame(step); else S.trav = false;
+  };
+  requestAnimationFrame(step);
+};
+
+/* ===================== 9. SECTION ④ MONEY RACE ===================== */
+function buildRets() {
+  $("rets").innerHTML = S.rets.map((x, i) => `<div class="ret"><i style="background:${x.c}"></i><label for="rr${i}" style="font-size:14px">${x.n}</label><input id="rr${i}" type="number" step="0.1" value="${x.r}"></div>`).join("");
+  S.rets.forEach((x, i) => $("rr" + i).oninput = () => { x.r = rd("rr" + i, 0, -50, 100); renderAll(); });
+}
+function render4() {
+  const A = S.a4, n = S.y4, inf = S.i4, today = S.mode4 === "today";
+  $("yl4").textContent = yearsTxt(n);
+  segOn("mode4", S.mode4);
+  $("note4").textContent = today ? "Today's dollars: what the money can actually buy, in prices of today." : "Future dollars: the number on the statement in " + (YEAR + n) + ", before prices rise.";
+  const val = (r, t) => today ? finalToday(A, r, inf, t) : finalFuture(A, r, t);
+  const res = S.rets.map(x => ({ ...x, fin: val(x.r, n), rr: realRet(x.r, inf) }));
+  const bank = res[0], realBank = finalToday(A, bank.r, inf, n);
+  const ranked = [...res].sort((a, b) => b.fin - a.fin), lead = ranked[0], last = ranked[ranked.length - 1];
+  $("h4").innerHTML = today
+    ? `<div class="k">After ${n} years · today's dollars</div><div class="big">Left in the bank, ${money(A)} ${realBank < A ? "shrinks" : "grows"} to <span class="${realBank < A ? "red" : "green"}">${money(realBank)}</span> of real buying power</div>
+       <div class="stats">${stat("Bank savings lose", money(Math.max(0, A - realBank)), "red")}${stat(`Leader: ${esc(lead.n)}`, money(lead.fin), "green")}${stat("Gap, first to last", money(lead.fin - last.fin), "gold")}</div>`
+    : `<div class="k">After ${n} years · future dollars</div><div class="big">Left in the bank, ${money(A)} becomes <span class="gold">${money(bank.fin)}</span> on paper, but buys only <span class="${realBank < A ? "red" : "green"}">${money(realBank)}</span> in today's prices</div>
+       <div class="stats">${stat("Bank savings lose (real)", money(Math.max(0, A - realBank)), "red")}${stat(`Leader: ${esc(lead.n)}`, money(lead.fin), "green")}${stat("Gap, first to last", money(lead.fin - last.fin), "gold")}</div>`;
+  $("fin4").innerHTML = ranked.map((x, i) => `<div class="finrow"><span class="rk">${i + 1}</span><div style="min-width:0"><span class="dot" style="background:${x.c}"></span><b>${esc(x.n)}</b> <span class="mut">${pct(x.r, x.r % 1 ? 1 : 0)}</span><span class="tag ${x.rr > 0 ? "g" : "r"}">${x.rr > 0 ? "Beating inflation" : "Losing to inflation"}</span><div class="mut" style="font-size:12px;margin-top:3px">Real return ${x.rr >= 0 ? "+" : "−"}${Math.abs(x.rr).toFixed(2)}% a year</div></div><div class="fv" style="color:${x.c}">${money(x.fin)}</div></div>`).join("");
+  const xs = Array.from({ length: n + 1 }, (_, i) => i);
+  $("ct4").textContent = today ? "What each pot can buy over time (today's dollars)" : "Each pot's value over time (future dollars)";
+  drawChart($("c4"), {
+    xs, xLabel: v => v + "y", xTip: v => v === 0 ? `Start (${YEAR})` : `In ${YEAR + v} (+${v} yrs)`,
+    lines: S.rets.map(x => ({ name: x.n, color: x.c, w: 3, y: xs.map(t => val(x.r, t)) })),
+    hRef: { y: A, label: "Starting line: " + money(A) }
+  });
+}
+
+/* ===================== 10. SECTION ⑤ RETIREMENT NUMBER ===================== */
+const potFor = (spend, inf, n, cpf, wr) => Math.max(0, spend * grow(inf, n) - cpf) * 12 / (wr / 100);
+function render5() {
+  const pr = pirRate();
+  if (S.pir5) { S.i5 = pr; $("i5").value = pr.toFixed(2); }
+  $("i5").disabled = S.pir5; $("pir5l").textContent = `Use my Personal Inflation Rate (${pct(pr)})`;
+  $("wrl5").textContent = pct(S.wr); segOn("plan5", S.plan);
+  const n = Math.max(0, S.ret - S.age), sp = S.sp5 * grow(S.i5, n), cpf = S.cpf, gap = Math.max(0, sp - cpf), pot = gap * 12 / (S.wr / 100);
+  const cover = pot > 0 ? S.t5 / pot * 100 : 100, ok = S.t5 >= pot;
+  const verdict = ok ? `<div class="verdict green">✅ Your ${big(S.t5)} target covers it, with ${big(S.t5 - pot)} to spare</div>`
+                     : `<div class="verdict gold">⚠ Your ${big(S.t5)} target covers ${Math.round(cover)}% — short by ${big(pot - S.t5)}</div>`;
+  $("h5").innerHTML = `<div class="k">At age ${S.ret} · ${n} years from now · ${pct(S.i5)} inflation</div>
+    <div class="big">Your ${money(S.sp5)} lifestyle will cost <span class="red">${money(sp)}</span> a month. ${gap > 0 ? `You need about <span class="gold">${money(Math.round(pot / 1000) * 1000)}</span> invested.` : "CPF LIFE alone covers it."}</div>
+    <div class="stats">${stat("CPF LIFE covers", money(Math.min(cpf, sp)) + " a month", "blue")}${stat("Monthly gap to fill", money(gap), "red")}${stat("Pot needed", money(pot), "gold")}</div>
+    ${verdict}<div class="bar"><i style="width:${clamp(cover, 0, 100)}%;background:${ok ? "var(--green)" : "linear-gradient(90deg,#ff6b5e,#f5c04a)"}"></i></div>`;
+  const end = Math.max(95, S.ret + 1), xs = []; for (let a = S.ret; a <= end; a++) xs.push(a);
+  const need = xs.map(a => sp * grow(S.i5, a - S.ret)), pay = xs.map(a => S.plan === "esc" ? cpf * Math.pow(1.02, a - S.ret) : cpf);
+  drawChart($("c5"), {
+    xs, xLabel: v => String(v), xTip: v => `Age ${v}`,
+    lines: [{ name: "Spending need", color: "#ff6b5e", w: 3, y: need }, { name: "CPF LIFE payout", color: "#5aa9ff", w: 3, y: pay }],
+    shade: { a: 0, b: 1, color: "rgba(255,107,94,.16)" }
+  });
+  const infs = [2, 3, 4, 5], wrs = [3.5, 4, 4.5, 5];
+  let h = `<table><thead><tr><th>Inflation ↓ / Withdrawal →</th>${wrs.map(w => `<th>${pct(w, 1)}</th>`).join("")}</tr></thead><tbody>`;
+  infs.forEach(i => {
+    h += `<tr><td class="rl">${i}%</td>`;
+    wrs.forEach(w => {
+      const p = potFor(S.sp5, i, n, cpf, w), good = p <= S.t5, cur = Math.abs(i - S.i5) < 1e-9 && Math.abs(w - S.wr) < 1e-9;
+      h += `<td class="cellw"><div class="cell ${cur ? "sel" : ""}" style="background:${good ? "rgba(61,220,151,.18)" : "rgba(255,107,94,.18)"}"><b>${big(p)}</b></div></td>`;
+    });
+    h += "</tr>";
+  });
+  $("sens5").innerHTML = h + "</tbody></table>";
+}
+
+/* ===================== 11. WIRING AND START ===================== */
+function renderAll(rebuildEditor) {
+  render1(); render2(); render3(); render4(); render5();
+}
+// section 1 inputs
+$("a1").oninput = () => { S.a1 = rd("a1", 0, 0); renderAll(); };
+$("y1").oninput = () => { S.y1 = +$("y1").value; renderAll(); };
+$("pir1").onchange = () => { S.pir1 = $("pir1").checked; renderAll(); };
+quick("aq1", [3000, 5000, 10000], v => money(v), v => { S.a1 = v; $("a1").value = v; renderAll(); });
+quick("yq1", [10, 20, 30], v => v + " yrs", v => { S.y1 = v; $("y1").value = v; renderAll(); });
+quick("rb1", RATES, v => pct(v, v % 1 ? 1 : 0), v => { S.sel1 = v; renderAll(); });
+seg("mode1", "mode1");
+// section 2 inputs
+$("h2").oninput = () => { S.head = rd("h2", 0, 0, 100); renderAll(); };
+$("sp2").oninput = () => { S.sp2 = rd("sp2", 0, 0); renderAll(); };
+$("y2").oninput = () => { S.y2 = +$("y2").value; renderAll(); };
+// section 3 inputs
+$("y3").oninput = () => { S.y3 = +$("y3").value; renderAll(); };
+quick("rb3", [2, 3, 4, 5], v => v + "%", v => { S.r3 = v; renderAll(); });
+seg("mode3", "mode3");
+// section 4 inputs
+$("a4").oninput = () => { S.a4 = rd("a4", 0, 0); renderAll(); };
+$("y4").oninput = () => { S.y4 = +$("y4").value; renderAll(); };
+$("i4").oninput = () => { S.i4 = rd("i4", 0, 0, 100); renderAll(); };
+seg("mode4", "mode4");
+// section 5 inputs
+$("age5").oninput = () => { S.age = rd("age5", 0, 0, 120); renderAll(); };
+$("ret5").oninput = () => { S.ret = rd("ret5", 0, 0, 94); renderAll(); };
+$("sp5").oninput = () => { S.sp5 = rd("sp5", 0, 0); renderAll(); };
+$("i5").oninput = () => { S.i5 = rd("i5", 0, 0, 100); renderAll(); };
+$("pir5").onchange = () => { S.pir5 = $("pir5").checked; if (!S.pir5) { S.i5 = rd("i5", 3, 0, 100); } renderAll(); };
+$("cpf5").oninput = () => { S.cpf = rd("cpf5", 0, 0); renderAll(); };
+$("wr5").oninput = () => { S.wr = +$("wr5").value; renderAll(); };
+$("t5").oninput = () => { S.t5 = rd("t5", 0, 0); renderAll(); };
+seg("plan5", "plan");
+
+buildCats(); buildEditor(); buildRets();
+renderAll();
+requestAnimationFrame(() => charts.forEach(paint));
+</script>
+</body></html>
